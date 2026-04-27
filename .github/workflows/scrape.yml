@@ -1,0 +1,74 @@
+name: Scrape Twickets Ticket Prices
+
+on:
+  # ── Scheduled runs ───────────────────────────────────────────────────────
+  # Daily at 08:00 UTC — smart skip logic in scrape.js handles off-season
+  schedule:
+    - cron: '0 8 * * *'
+
+  # ── Manual trigger ───────────────────────────────────────────────────────
+  # Run from GitHub → Actions → "Scrape Twickets Ticket Prices" → Run workflow
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Festival year to scrape (e.g. 2026, 2027)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run — scrape only, do not commit data'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scraper/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scraper
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: scraper
+        run: npx playwright install chromium --with-deps
+
+      - name: Run scraper
+        working-directory: scraper
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.year }}" ]; then
+            ARGS="$ARGS --year ${{ github.event.inputs.year }}"
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node scrape.js $ARGS
+
+      - name: Commit updated data
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name  'IoW Ticket Bot'
+          git config user.email 'bot@noreply.github.com'
+          git add data/snapshots.json data/events.json
+          # Only commit if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit (snapshot already exists for today)"
+          else
+            git commit -m "📊 Snapshot $(date +'%Y-%m-%d') — automated scrape"
+            git push
+            echo "✅ Data committed and pushed — Netlify rebuild triggered"
+          fi

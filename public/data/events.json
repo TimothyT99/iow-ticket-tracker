@@ -1,0 +1,64 @@
+{
+  "years": {
+    "2026": {
+      "festival": {
+        "date": "2026-06-18",
+        "venue": "Seaclose Park, Newport, Isle of Wight"
+      },
+      "twicketsEventId": "1938221263201767424",
+      "twicketsUrl": "https://www.twickets.live/en/event/1938221263201767424",
+      "faceValues": {
+        "adult_camping": 368.00,
+        "adult_non_camping": 285.02,
+        "early_bird_camping": 266.05,
+        "premium_camping": 409.40,
+        "glamping_2person": 1558.25
+      },
+      "primaryTier": "adult_camping",
+      "announcements": [
+        {
+          "date": "2025-10-01",
+          "type": "lineup_1",
+          "label": "Lineup 1",
+          "description": "First headline announcement (approx — update with actual date)",
+          "confirmed": false
+        },
+        {
+          "date": "2026-02-01",
+          "type": "lineup_2",
+          "label": "Lineup 2",
+          "description": "Second headline announcement (approx — update with actual date)",
+          "confirmed": false
+        }
+      ],
+      "notes": "IoW Festival 2026. Sky presents. Tickets went on sale approx Oct 2025."
+    },
+    "2027": {
+      "festival": {
+        "date": "2027-06-17",
+        "venue": "Seaclose Park, Newport, Isle of Wight"
+      },
+      "twicketsEventId": null,
+      "twicketsUrl": null,
+      "faceValues": {},
+      "primaryTier": "adult_camping",
+      "announcements": [
+        {
+          "date": "2026-10-01",
+          "type": "lineup_1",
+          "label": "Lineup 1",
+          "description": "First headline announcement — update when confirmed",
+          "confirmed": false
+        },
+        {
+          "date": "2027-02-01",
+          "type": "lineup_2",
+          "label": "Lineup 2",
+          "description": "Second headline announcement — update when confirmed",
+          "confirmed": false
+        }
+      ],
+      "notes": "Update twicketsEventId and faceValues as soon as 2027 tickets go on sale. Find the event ID from the Twickets URL for the event page."
+    }
+  }
+}

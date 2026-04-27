@@ -1,0 +1,13 @@
+{
+  "name": "iow-ticket-scraper",
+  "version": "1.0.0",
+  "description": "Scraper for IoW Festival resale ticket prices on Twickets",
+  "main": "scrape.js",
+  "scripts": {
+    "scrape": "node scrape.js",
+    "scrape:dry": "node scrape.js --dry-run"
+  },
+  "dependencies": {
+    "playwright": "^1.43.0"
+  }
+}

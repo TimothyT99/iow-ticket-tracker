@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoW Festival — Ticket Price Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117; --bg2: #161b22; --bg3: #1c2128;
+  --border:  #30363d; --border2: #21262d;
+  --text:    #e6edf3; --text2: #c9d1d9; --text3: #8b949e; --text4: #484f58;
+  --blue:    #58a6ff; --green: #3fb950; --orange: #ff6b35;
+  --purple:  #a371f7; --red: #f85149; --yellow: #d29922;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+a { color: var(--blue); }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d1b69 50%, #1a1f2e 100%);
+  padding: 22px 28px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 18px;
+}
+.logo {
+  width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--orange), #f7c59f);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 900; color: #1a1f2e;
+}
+.header-text h1 { font-size: 20px; font-weight: 700; }
+.header-text p { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.header-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+.countdown {
+  background: rgba(255,107,53,.12); border: 1px solid rgba(255,107,53,.35);
+  border-radius: 10px; padding: 8px 16px; text-align: center;
+}
+.countdown .n { font-size: 26px; font-weight: 800; color: var(--orange); line-height: 1; }
+.countdown .l { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.year-select {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 8px 12px; font-size: 13px; cursor: pointer;
+}
+
+/* ── TABS ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.tabs { display: flex; gap: 2px; margin-bottom: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tab {
+  padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+  border-radius: 8px 8px 0 0; color: var(--text3); background: none; transition: all .15s;
+}
+.tab.active { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-bottom-color: var(--bg2); margin-bottom: -1px; }
+.tab:hover:not(.active) { color: var(--text2); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── CARDS & GRIDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 24px; }
+.stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+.stat .v { font-size: 24px; font-weight: 800; margin-bottom: 3px; }
+.stat .l { font-size: 11px; color: var(--text3); }
+.c-blue   .v { color: var(--blue); }
+.c-green  .v { color: var(--green); }
+.c-orange .v { color: var(--orange); }
+.c-purple .v { color: var(--purple); }
+.c-red    .v { color: var(--red); }
+.c-yellow .v { color: var(--yellow); }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+@media(max-width:680px) { .row2 { grid-template-columns: 1fr; } }
+
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.card-p { padding: 20px; }
+.card h3 { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 14px; }
+.card canvas { max-height: 240px; }
+
+/* ── SIGNAL BOX ── */
+.signal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media(max-width:680px) { .signal-row { grid-template-columns: 1fr; } }
+.signal {
+  border-radius: 12px; padding: 20px; border: 2px solid;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.signal.buy  { background: rgba(63,185,80,.07);  border-color: rgba(63,185,80,.3);  }
+.signal.sell { background: rgba(88,166,255,.07); border-color: rgba(88,166,255,.3); }
+.signal.wait { background: rgba(210,153,34,.07); border-color: rgba(210,153,34,.3); }
+.signal-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+.signal-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.signal-body p  { font-size: 13px; color: var(--text3); line-height: 1.5; }
+.signal.buy  .signal-body h4 { color: var(--green); }
+.signal.sell .signal-body h4 { color: var(--blue); }
+.signal.wait .signal-body h4 { color: var(--yellow); }
+
+/* ── INFO BOX ── */
+.info { background: rgba(88,166,255,.07); border: 1px solid rgba(88,166,255,.2); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--text3); margin-bottom: 20px; line-height: 1.6; }
+.info strong { color: var(--blue); }
+.info.amber { background: rgba(210,153,34,.07); border-color: rgba(210,153,34,.25); }
+.info.amber strong { color: var(--yellow); }
+.info.green { background: rgba(63,185,80,.07); border-color: rgba(63,185,80,.25); }
+.info.green strong { color: var(--green); }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--bg3); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border2); transition: background .1s; }
+tbody tr:last-child { border: none; }
+tbody tr:hover { background: rgba(255,255,255,.02); }
+tbody td { padding: 10px 14px; vertical-align: middle; }
+
+/* ── BADGES ── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.b-green  { background: rgba(63,185,80,.15);  color: var(--green);  border: 1px solid rgba(63,185,80,.3);  }
+.b-blue   { background: rgba(88,166,255,.15); color: var(--blue);   border: 1px solid rgba(88,166,255,.3); }
+.b-orange { background: rgba(255,107,53,.15); color: #ff9966;       border: 1px solid rgba(255,107,53,.3); }
+.b-purple { background: rgba(163,113,247,.15);color: var(--purple); border: 1px solid rgba(163,113,247,.3);}
+.b-red    { background: rgba(248,81,73,.15);  color: var(--red);    border: 1px solid rgba(248,81,73,.3);  }
+.b-grey   { background: rgba(139,148,158,.12);color: var(--text3);  border: 1px solid rgba(139,148,158,.3);}
+.b-yellow { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+
+/* ── MISC ── */
+.sec-title { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.sec-title::before { content:''; display:block; width:3px; height:16px; background:var(--orange); border-radius:2px; }
+.bar-spark { height: 5px; border-radius: 3px; display: inline-block; }
+.empty-state { text-align:center; color: var(--text4); padding: 36px; font-size: 13px; }
+footer { text-align:center; padding:18px; font-size:11px; color: var(--text4); border-top:1px solid var(--border2); margin-top:10px; }
+code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">IoW</div>
+  <div class="header-text">
+    <h1>Isle of Wight Festival — Ticket Price Tracker</h1>
+    <p>Adult Weekend Camping · Twickets Resale · Auto-updated via GitHub Actions</p>
+  </div>
+  <div class="header-right">
+    <select class="year-select" id="yearSelect" onchange="setYear(this.value)"></select>
+    <div class="countdown">
+      <div class="n" id="daysLeft">—</div>
+      <div class="l">days to go</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('market',this)">📊 Market Now</button>
+    <button class="tab" onclick="showTab('trends',this)">📈 Price Trends</button>
+    <button class="tab" onclick="showTab('signals',this)">🎯 Buy/Sell Signals</button>
+    <button class="tab" onclick="showTab('sold',this)">💸 Likely Sold</button>
+    <button class="tab" onclick="showTab('setup',this)">⚙️ Setup</button>
+  </div>
+
+  <!-- ═══════ MARKET NOW ═══════ -->
+  <div id="tab-market" class="tab-panel active">
+    <div id="snapshotInfo" class="info"></div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="row2">
+      <div class="card card-p">
+        <h3>Price Distribution</h3>
+        <canvas id="distChart"></canvas>
+      </div>
+      <div class="card card-p">
+        <h3>vs Face Value</h3>
+        <canvas id="fvChart"></canvas>
+      </div>
+    </div>
+
+    <div class="sec-title">All Listings — Latest Snapshot</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Price</th><th>Qty</th><th>vs Face Value</th><th>Tier</th><th>Bar</th></tr></thead>
+        <tbody id="listingsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════ PRICE TRENDS ═══════ -->
+  <div id="tab-trends" class="tab-panel">
+    <div id="announcementBanner" class="info amber" style="display:none"></div>
+
+    <div class="card card-p" style="margin-bottom:20px">
+      <h3>Avg & Min Ask Price Over Time — Days to Festival (right = closer)</h3>
+      <canvas id="trendChart" style="max-height:300px"></canvas>
+    </div>
+
+    <div class="row2">
+      <div class="card card-p">
+        <h3>Supply — Number of Listings</h3>
+        <canvas id="supplyChart"></canvas>
+      </div>
+      <div class="card card-p">
+        <h3>% Listings Below Face Value</h3>
+        <canvas id="pctBelowChart"></canvas>
+      </div>
+    </div>
+
+    <div class="info">
+      <strong>Typical resale pattern for major UK festivals:</strong><br>
+      Prices start high → dip in the 4–6 week window (ideal buy zone) → spike sharply in the final 10 days.
+      Lineup announcements in <strong>Sep/Oct</strong> and <strong>Jan/Feb</strong> typically cause a short-term price spike (2–3 weeks)
+      followed by a correction. Selling just before or just after an announcement is usually the strongest exit.
+    </div>
+  </div>
+
+  <!-- ═══════ BUY/SELL SIGNALS ═══════ -->
+  <div id="tab-signals" class="tab-panel">
+    <div id="signalRow" class="signal-row"></div>
+
+    <div class="card card-p" style="margin-bottom:20px">
+      <h3>Price vs Key Events — Timeline</h3>
+      <canvas id="signalChart" style="max-height:300px"></canvas>
+    </div>
+
+    <div class="sec-title">Upcoming Key Dates</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Date</th><th>Event</th><th>Typical Price Impact</th><th>Days Away</th></tr></thead>
+        <tbody id="keyDatesBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════ LIKELY SOLD ═══════ -->
+  <div id="tab-sold" class="tab-panel">
+    <div class="info">
+      <strong>How this works:</strong> Each snapshot fingerprints listings as <code>price|qty|tier</code>.
+      When a fingerprint disappears between snapshots it's inferred as <em>likely sold</em>.
+      High confidence = unique fingerprint. Low confidence = shared fingerprint (ambiguous).
+      "Accepting Offers" listings may have sold below the listed price.
+    </div>
+
+    <div class="stats-grid" id="soldStats"></div>
+
+    <div class="card card-p" style="margin-bottom:20px">
+      <h3>Inferred Sold Prices vs Asking (scatter by days to festival)</h3>
+      <canvas id="soldChart" style="max-height:280px"></canvas>
+    </div>
+
+    <div class="sec-title">Sold Log</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Disappeared</th><th>Price</th><th>Qty</th><th>Days Listed</th><th>Confidence</th><th>Tier</th></tr></thead>
+        <tbody id="soldBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════ SETUP ═══════ -->
+  <div id="tab-setup" class="tab-panel">
+    <div class="sec-title">How It Works</div>
+    <div class="card card-p" style="font-size:13px;line-height:1.8;color:var(--text2)">
+      <p><strong style="color:var(--blue)">Architecture</strong><br>
+      GitHub Actions runs the Playwright scraper on a schedule every 3 days, commits new data to
+      <code>data/snapshots.json</code>, and the commit triggers a Netlify rebuild. You never need to
+      run anything manually.</p><br>
+
+      <p><strong style="color:var(--blue)">Running a manual scrape</strong><br>
+      Go to your GitHub repo → Actions → "Scrape Twickets Ticket Prices" → Run workflow.
+      Or locally: <code>cd scraper && npm install && npx playwright install chromium && node scrape.js</code></p><br>
+
+      <p><strong style="color:var(--blue)">Adding IoW 2027</strong><br>
+      When 2027 tickets go on sale, go to Twickets, find the event page, and copy the event ID from the URL
+      (the long number after <code>/event/</code>). Add it to <code>data/events.json</code> under the
+      <code>2027</code> key along with the face value. The scraper will automatically start collecting
+      2027 data from the next run.</p><br>
+
+      <p><strong style="color:var(--blue)">Updating announcement dates</strong><br>
+      Edit <code>data/events.json</code> and update the <code>announcements</code> array with confirmed dates
+      and a brief description of who was announced. These appear as markers on the trend chart.</p><br>
+
+      <p><strong style="color:var(--blue)">Fingerprinting & sold inference</strong><br>
+      Listing IDs are not exposed by Twickets, so each listing is identified by <code>price|qty|tier</code>.
+      Unique fingerprints give high-confidence sold signals. Listings marked "Accepting Offers" that
+      disappear likely sold below asking.</p><br>
+
+      <p><strong style="color:var(--blue)">Scrape frequency strategy</strong><br>
+      Every 3 days is a good default. Consider running daily in the 2 weeks before the festival and
+      around announcement dates. The GitHub Actions workflow supports manual triggers for this.</p>
+    </div>
+
+    <div class="sec-title">Snapshot History</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Date</th><th>Year</th><th>Days to Festival</th><th>Listings</th><th>Min</th><th>Avg</th><th>Median</th><th>% Below FV</th><th>Source</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>IoW Festival Ticket Tracker · GitHub Actions + Playwright + Netlify · Data from Twickets</footer>
+
+<script>
+// ── LOAD DATA ─────────────────────────────────────────────────────────────
+let SNAPS = null, EVENTS = null, activeYear = null;
+
+async function loadData() {
+  try {
+    const [snapsRes, eventsRes] = await Promise.all([
+      fetch('/data/snapshots.json?v=' + Date.now()),
+      fetch('/data/events.json?v='    + Date.now()),
+    ]);
+    SNAPS  = await snapsRes.json();
+    EVENTS = await eventsRes.json();
+  } catch(e) {
+    console.error('Failed to load data:', e);
+    document.body.innerHTML = '<div style="padding:60px;text-align:center;color:#8b949e">' +
+      '<h2 style="color:#f85149">Data files not found</h2>' +
+      '<p style="margin-top:12px">Make sure data/snapshots.json and data/events.json exist.</p></div>';
+    return;
+  }
+  init();
+}
+
+function init() {
+  // Populate year selector
+  const years = Object.keys(EVENTS.years).sort().reverse();
+  const sel   = document.getElementById('yearSelect');
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = 'IoW ' + y;
+    sel.appendChild(opt);
+  });
+  setYear(years[0]);
+}
+
+function setYear(year) {
+  activeYear = year;
+  document.getElementById('yearSelect').value = year;
+  renderAll();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const fmt    = p  => '£' + (+p).toFixed(2);
+const fmtS   = p  => '£' + Math.round(p);
+const daysBetween = (a, b) => Math.ceil((new Date(b) - new Date(a)) / 86400000);
+
+function getYearSnaps() {
+  return SNAPS.snapshots
+    .filter(s => s.year === activeYear)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getEventConfig() { return EVENTS.years[activeYear]; }
+
+function computeStats(listings, fv) {
+  const prices = listings.map(l => +l.price).sort((a,b) => a-b);
+  const n = prices.length;
+  if (!n) return {};
+  const sum = prices.reduce((s,p) => s+p, 0);
+  const med = n%2===0 ? (prices[n/2-1]+prices[n/2])/2 : prices[Math.floor(n/2)];
+  return {
+    min:    prices[0], max: prices[n-1],
+    avg:    Math.round(sum/n*100)/100,
+    median: Math.round(med*100)/100,
+    count:  n,
+    belowFV: listings.filter(l => +l.price < fv).length,
+    atFV:    listings.filter(l => +l.price === fv).length,
+    aboveFV: listings.filter(l => +l.price > fv).length,
+  };
+}
+
+function getAllSoldInferred(snaps) {
+  const all = [];
+  snaps.forEach(s => {
+    if (s.inferredSold) {
+      s.inferredSold.forEach(sold => {
+        all.push({ ...sold, snapshotDaysTo: s.daysToFestival });
+      });
+    }
+  });
+  return all;
+}
+
+// Buy/sell signal computation
+function computeSignal(snaps, eventConfig) {
+  const fv        = eventConfig?.faceValues?.adult_camping || 368;
+  const today     = new Date().toISOString().split('T')[0];
+  const daysTo    = daysBetween(today, eventConfig?.festival?.date || '2099-01-01');
+  const latest    = snaps[snaps.length - 1];
+  if (!latest) return { buy: 'insufficient', sell: 'insufficient', reason: 'No data yet' };
+
+  const stats     = computeStats(latest.listings, fv);
+  const avgVsFV   = ((stats.avg - fv) / fv * 100).toFixed(1);
+
+  // Momentum: compare last two snapshots
+  let momentum    = 'flat';
+  if (snaps.length >= 2) {
+    const prev    = snaps[snaps.length - 2];
+    const prevSt  = computeStats(prev.listings, fv);
+    if (stats.avg < prevSt.avg - 5) momentum = 'falling';
+    else if (stats.avg > prevSt.avg + 5) momentum = 'rising';
+  }
+
+  // Announcement proximity
+  const anns      = eventConfig?.announcements || [];
+  const nearAnn   = anns.find(a => {
+    const d = daysBetween(today, a.date);
+    return d >= -7 && d <= 14; // within a week past or 2 weeks before
+  });
+
+  // Buy signal
+  let buySignal, buyReason;
+  if (daysTo < 7) {
+    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance, prices rising.`;
+  } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
+    buySignal = 'wait'; buyReason = `${nearAnn.label} announcement in ${daysBetween(today, nearAnn.date)} days — prices likely to spike. Consider waiting until 2 weeks after.`;
+  } else if (momentum === 'falling' && daysTo >= 14 && stats.avg < fv) {
+    buySignal = 'buy'; buyReason = `Avg price is falling (now ${fmt(stats.avg)}, ${Math.abs(avgVsFV)}% below FV). Good buying window with ${daysTo} days left.`;
+  } else if (daysTo >= 28 && daysTo <= 56 && stats.avg < fv) {
+    buySignal = 'watch'; buyReason = `In the typical discount window (${daysTo} days out). Average is ${fmt(stats.avg)} — monitor daily for further drops.`;
+  } else {
+    buySignal = 'wait'; buyReason = `Prices at ${fmt(stats.avg)} (avg). Not a clear discount yet — patience likely rewarded.`;
+  }
+
+  // Sell signal
+  let sellSignal, sellReason;
+  if (nearAnn && daysBetween(today, nearAnn.date) <= 7 && daysBetween(today, nearAnn.date) >= -3) {
+    sellSignal = 'sell'; sellReason = `${nearAnn.label} announcement imminent — peak demand window. List now for best returns.`;
+  } else if (daysTo <= 14) {
+    sellSignal = 'sell'; sellReason = `Final 2 weeks — urgency buying creates a seller's market. List immediately.`;
+  } else if (momentum === 'rising') {
+    sellSignal = 'watch'; sellReason = `Prices rising (momentum up). Hold — may have further to run before the announcement spike.`;
+  } else if (momentum === 'falling' && daysTo > 28) {
+    sellSignal = 'wait'; sellReason = `Prices falling. Wait for the next announcement or the final-week spike.`;
+  } else {
+    sellSignal = 'watch'; sellReason = `Market stable. Best sell windows: just before a lineup announcement, or the final 2 weeks.`;
+  }
+
+  return { buySignal, buyReason, sellSignal, sellReason, stats, momentum, daysTo, fv };
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+let charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+const CHART_DEFAULTS = {
+  responsive: true, maintainAspectRatio: true,
+  plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 12 } } },
+};
+
+function renderAll() {
+  const snaps  = getYearSnaps();
+  const config = getEventConfig();
+  const fv     = config?.faceValues?.adult_camping || 368;
+  const latest = snaps[snaps.length - 1];
+  const today  = new Date().toISOString().split('T')[0];
+  const daysTo = daysBetween(today, config?.festival?.date || '2099-01-01');
+
+  document.getElementById('daysLeft').textContent = daysTo > 0 ? daysTo : '🎉';
+
+  renderMarket(snaps, latest, fv);
+  renderTrends(snaps, config, fv);
+  renderSignals(snaps, config, fv);
+  renderSold(snaps);
+  renderSetup(snaps, fv);
+}
+
+// ── MARKET NOW ─────────────────────────────────────────────────────────────
+function renderMarket(snaps, latest, fv) {
+  const info = document.getElementById('snapshotInfo');
+  if (!latest) {
+    info.innerHTML = 'No snapshots yet. Run the scraper to start collecting data.';
+    return;
+  }
+  const st = computeStats(latest.listings, fv);
+  info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${st.count}</strong> adult camping listings · Face value: <strong>${fmt(fv)}</strong> · Source: ${latest.source}`;
+
+  // Stats
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = '';
+  const cards = [
+    { v: fmt(st.min),    l: 'Lowest Ask',      c: 'c-blue'   },
+    { v: fmt(st.avg),    l: 'Average Ask',      c: 'c-green'  },
+    { v: fmt(st.median), l: 'Median Ask',       c: ''         },
+    { v: fmt(st.max),    l: 'Highest Ask',      c: 'c-orange' },
+    { v: st.count,       l: 'Listings',         c: 'c-purple' },
+    { v: st.belowFV,     l: 'Below Face Value', c: 'c-green'  },
+    { v: fmt(fv),        l: 'Face Value',       c: 'c-blue'   },
+  ];
+  cards.forEach(c => {
+    grid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
+  });
+
+  // Distribution chart
+  destroyChart('dist');
+  const bands = [
+    {l:'<£270', lo:0,      hi:270   },
+    {l:'£270–300',lo:270,  hi:300   },
+    {l:'£300–330',lo:300,  hi:330   },
+    {l:'£330–368',lo:330,  hi:368   },
+    {l:'£368 FV', lo:368,  hi:368.01},
+    {l:'>£368',   lo:368.01,hi:9999 },
+  ];
+  const bColors = ['#3fb950','#6ee7b7','#58a6ff','#79c0ff','#ff6b35','#a371f7'];
+  const bCounts = bands.map(b => latest.listings.filter(l=>+l.price>=b.lo&&+l.price<b.hi).length);
+  charts.dist = new Chart(document.getElementById('distChart'), {
+    type:'bar', data:{ labels:bands.map(b=>b.l), datasets:[{
+      data:bCounts, backgroundColor:bColors.map(c=>c+'bb'), borderColor:bColors, borderWidth:1, borderRadius:4
+    }]},
+    options:{ ...CHART_DEFAULTS, plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'#21262d'}}, y:{ticks:{color:'#8b949e',stepSize:1},grid:{color:'#21262d'},beginAtZero:true} }
+    }
+  });
+
+  // FV donut
+  destroyChart('fv');
+  charts.fv = new Chart(document.getElementById('fvChart'), {
+    type:'doughnut',
+    data:{ labels:['Below FV','At FV','Above FV'], datasets:[{
+      data:[st.belowFV,st.atFV,st.aboveFV],
+      backgroundColor:['#3fb95099','#58a6ff99','#a371f799'],
+      borderColor:['#3fb950','#58a6ff','#a371f7'], borderWidth:2
+    }]},
+    options:{ ...CHART_DEFAULTS, plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:11},boxWidth:12,padding:10}}} }
+  });
+
+  // Listings table
+  const tbody = document.getElementById('listingsBody');
+  tbody.innerHTML = '';
+  const sorted = [...latest.listings].sort((a,b) => +a.price - +b.price);
+  sorted.forEach(l => {
+    const diff   = +l.price - fv;
+    const isBelow= +l.price < fv, isAbove = +l.price > fv;
+    const bc     = isBelow ? 'b-green' : isAbove ? 'b-purple' : 'b-blue';
+    const fvText = +l.price===fv ? 'Face value' : (diff>0?'+':'')+fmt(Math.abs(diff))+(isBelow?' below':' above');
+    const barW   = Math.round((+l.price/500)*100);
+    const barC   = isBelow ? '#3fb950' : isAbove ? '#a371f7' : '#58a6ff';
+    tbody.innerHTML += `<tr>
+      <td><strong>${fmt(+l.price)}</strong></td>
+      <td>${l.qty}</td>
+      <td><span class="badge ${bc}">${fvText}</span>${l.offers?' <span class="badge b-grey">Offers</span>':''}</td>
+      <td style="color:var(--text3);font-size:12px">${l.tier}</td>
+      <td><span class="bar-spark" style="width:${barW}px;background:${barC}"></span></td>
+    </tr>`;
+  });
+}
+
+// ── PRICE TRENDS ───────────────────────────────────────────────────────────
+function renderTrends(snaps, config, fv) {
+  const anns = config?.announcements || [];
+
+  // Check for upcoming announcement
+  const today    = new Date().toISOString().split('T')[0];
+  const upcoming = anns.find(a => daysBetween(today, a.date) >= -14 && daysBetween(today, a.date) <= 30);
+  const annBanner = document.getElementById('announcementBanner');
+  if (upcoming) {
+    const d = daysBetween(today, upcoming.date);
+    annBanner.style.display = '';
+    annBanner.innerHTML = `<strong>📣 ${upcoming.label}:</strong> ${upcoming.description} — ${d >= 0 ? `in ${d} days` : `${Math.abs(d)} days ago`}. Prices typically spike around lineup announcements.`;
+  } else {
+    annBanner.style.display = 'none';
+  }
+
+  if (snaps.length < 1) return;
+
+  const labels = snaps.map(s => s.date.slice(5)); // MM-DD
+  const avgs   = snaps.map(s => computeStats(s.listings, fv).avg);
+  const mins   = snaps.map(s => computeStats(s.listings, fv).min);
+  const counts = snaps.map(s => s.listings.length);
+  const pctBelow = snaps.map(s => {
+    const st = computeStats(s.listings, fv);
+    return st.count ? Math.round(st.belowFV / st.count * 100) : 0;
+  });
+
+  // Announcement vertical lines as annotations (manual via dataset)
+  const annDatasets = anns.map(a => ({
+    label: a.label,
+    data: labels.map(l => {
+      const fullDate = snaps.find(s => s.date.slice(5) === l)?.date || '';
+      return null; // We'll draw annotations separately
+    }),
+    borderColor: 'rgba(210,153,34,0.5)',
+    borderWidth: 0,
+    pointRadius: 0,
+  }));
+
+  destroyChart('trend');
+  charts.trend = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Avg Ask',    data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
+      { label:'Min Ask',   data:mins, borderColor:'#3fb950', backgroundColor:'transparent', tension:.3, borderDash:[5,3], pointRadius:5, pointBackgroundColor:'#3fb950' },
+      { label:`Face Value ${fmt(fv)}`, data:snaps.map(()=>fv), borderColor:'rgba(255,107,53,0.5)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
+    ]},
+    options:{ ...CHART_DEFAULTS,
+      plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw||0).toFixed(2)}` } } },
+      scales:{
+        x:{ ticks:{color:'#8b949e'}, grid:{color:'#21262d'} },
+        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:220, max:430 }
+      }
+    }
+  });
+
+  destroyChart('supply');
+  charts.supply = new Chart(document.getElementById('supplyChart'), {
+    type:'line',
+    data:{ labels, datasets:[{ label:'# Listings', data:counts, borderColor:'#a371f7', backgroundColor:'#a371f722', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#a371f7' }]},
+    options:{ ...CHART_DEFAULTS, scales:{ x:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}}, y:{ticks:{color:'#8b949e',stepSize:2},grid:{color:'#21262d'},beginAtZero:false,min:0} } }
+  });
+
+  destroyChart('pctBelow');
+  charts.pctBelow = new Chart(document.getElementById('pctBelowChart'), {
+    type:'line',
+    data:{ labels, datasets:[{ label:'% below FV', data:pctBelow, borderColor:'#3fb950', backgroundColor:'#3fb95022', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#3fb950' }]},
+    options:{ ...CHART_DEFAULTS, scales:{
+      x:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}},
+      y:{ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'#21262d'},min:0,max:100}
+    }}
+  });
+}
+
+// ── BUY/SELL SIGNALS ───────────────────────────────────────────────────────
+function renderSignals(snaps, config, fv) {
+  const sig = computeSignal(snaps, config);
+  const row = document.getElementById('signalRow');
+
+  const signalIcon = { buy:'🟢', watch:'🟡', wait:'🟠', urgent:'🔴', sell:'🔵', insufficient:'⚪' };
+  const signalClass= { buy:'buy', watch:'buy', wait:'wait', urgent:'buy', sell:'sell', insufficient:'wait' };
+
+  row.innerHTML = `
+    <div class="signal ${signalClass[sig.buySignal]||'wait'}">
+      <div class="signal-icon">${signalIcon[sig.buySignal]||'⚪'}</div>
+      <div class="signal-body">
+        <h4>${sig.buySignal === 'buy' ? '✅ Good Time to Buy' : sig.buySignal === 'urgent' ? '⚡ Buy Urgently' : sig.buySignal === 'watch' ? '👀 Watch the Market' : '⏳ Wait to Buy'}</h4>
+        <p>${sig.buyReason || 'Insufficient data'}</p>
+        ${sig.stats ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">Current avg: ${fmt(sig.stats.avg)} · Min available: ${fmt(sig.stats.min)} · FV: ${fmt(sig.fv)}</p>` : ''}
+      </div>
+    </div>
+    <div class="signal ${signalClass[sig.sellSignal]||'wait'}">
+      <div class="signal-icon">${signalIcon[sig.sellSignal]||'⚪'}</div>
+      <div class="signal-body">
+        <h4>${sig.sellSignal === 'sell' ? '💰 Good Time to Sell' : sig.sellSignal === 'watch' ? '👀 Hold — Watch Momentum' : '⏳ Wait to Sell'}</h4>
+        <p>${sig.sellReason || 'Insufficient data'}</p>
+        ${sig.momentum !== undefined ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">Price momentum: ${sig.momentum} · ${sig.daysTo} days to festival</p>` : ''}
+      </div>
+    </div>`;
+
+  // Key dates table
+  const today = new Date().toISOString().split('T')[0];
+  const anns  = config?.announcements || [];
+  const festDate = config?.festival?.date;
+  const allDates = [
+    ...anns.map(a => ({ date: a.date, label: a.label + ' Announcement', impact: 'Price spike +10–20% for 2–3 weeks', type: 'ann' })),
+    { date: festDate, label: '🎪 Festival', impact: 'Deadline — prices peak in final 7 days', type: 'fest' }
+  ].sort((a,b) => a.date.localeCompare(b.date));
+
+  const kdBody = document.getElementById('keyDatesBody');
+  kdBody.innerHTML = '';
+  allDates.forEach(d => {
+    const daysAway = daysBetween(today, d.date);
+    const past = daysAway < 0;
+    kdBody.innerHTML += `<tr style="${past?'opacity:.45':''}">
+      <td><strong>${d.date}</strong></td>
+      <td>${d.label}</td>
+      <td style="color:var(--text3);font-size:12px">${d.impact}</td>
+      <td>${past ? `<span class="badge b-grey">${Math.abs(daysAway)}d ago</span>` : `<span class="badge ${d.type==='fest'?'b-orange':'b-yellow'}">${daysAway}d</span>`}</td>
+    </tr>`;
+  });
+
+  // Signal chart — reuse trend data
+  const labels = snaps.map(s => s.date.slice(5));
+  const avgs   = snaps.map(s => computeStats(s.listings, fv).avg);
+  destroyChart('signal');
+  charts.signal = new Chart(document.getElementById('signalChart'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Avg Ask', data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
+      { label:`Face Value`,  data:snaps.map(()=>fv), borderColor:'rgba(255,107,53,0.5)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
+    ]},
+    options:{ ...CHART_DEFAULTS,
+      plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw||0).toFixed(2)}` } } },
+      scales:{
+        x:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}},
+        y:{ticks:{color:'#8b949e',callback:v=>'£'+v},grid:{color:'#21262d'},min:220,max:430}
+      }
+    }
+  });
+}
+
+// ── LIKELY SOLD ─────────────────────────────────────────────────────────────
+function renderSold(snaps) {
+  const all = getAllSoldInferred(snaps);
+  const fv  = getEventConfig()?.faceValues?.adult_camping || 368;
+
+  // Stats
+  const soldGrid = document.getElementById('soldStats');
+  soldGrid.innerHTML = '';
+  if (all.length) {
+    const prices = all.map(s => s.price);
+    const avgSold = prices.reduce((a,b)=>a+b,0)/prices.length;
+    const highConf = all.filter(s=>s.confidence==='high').length;
+    const cards2 = [
+      { v: all.length,          l: 'Likely Sold', c: 'c-purple' },
+      { v: fmt(Math.min(...prices)), l: 'Lowest Sold', c: 'c-green'  },
+      { v: fmt(avgSold),        l: 'Avg Sold',     c: 'c-blue'   },
+      { v: fmt(Math.max(...prices)), l: 'Highest Sold',c: 'c-orange' },
+      { v: highConf,            l: 'High Confidence', c: 'c-green' },
+    ];
+    cards2.forEach(c => {
+      soldGrid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
+    });
+  }
+
+  // Sold chart (scatter)
+  destroyChart('sold');
+  const askData  = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: +l.price })));
+  const soldData = all.map(s => ({ x: s.snapshotDaysTo, y: s.price }));
+  charts.sold = new Chart(document.getElementById('soldChart'), {
+    type:'scatter',
+    data:{ datasets:[
+      { label:'Asking prices', data:askData, backgroundColor:'#58a6ff44', borderColor:'#58a6ff', pointRadius:4 },
+      { label:'Likely sold',   data:soldData, backgroundColor:'#3fb95099', borderColor:'#3fb950', pointRadius:7, pointStyle:'star' },
+      { label:`Face Value ${fmt(fv)}`, data:[{x:200,y:fv},{x:0,y:fv}], type:'line', borderColor:'rgba(255,107,53,.4)', borderDash:[8,4], pointRadius:0 },
+    ]},
+    options:{ ...CHART_DEFAULTS,
+      plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw?.y||0).toFixed(2)} @ ${ctx.raw?.x}d` } } },
+      scales:{
+        x:{ title:{display:true,text:'Days to Festival',color:'#8b949e'}, ticks:{color:'#8b949e'}, grid:{color:'#21262d'}, reverse:true, min:0, max:200 },
+        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:220, max:450 }
+      }
+    }
+  });
+
+  // Sold log table
+  const soldBody = document.getElementById('soldBody');
+  soldBody.innerHTML = '';
+  if (!all.length) {
+    soldBody.innerHTML = '<tr><td colspan="6" class="empty-state">No sold inferences yet — run a second snapshot.</td></tr>';
+  } else {
+    all.sort((a,b) => b.disappearedDate.localeCompare(a.disappearedDate)).forEach(s => {
+      soldBody.innerHTML += `<tr>
+        <td>${s.disappearedDate}</td>
+        <td><strong>${fmt(s.price)}</strong>${s.offersAccepted?' <span class="badge b-grey" title="May have sold below asking">Offers</span>':''}</td>
+        <td>${s.qty}</td>
+        <td>${s.daysListed}d</td>
+        <td><span class="badge ${s.confidence==='high'?'b-green':'b-grey'}">${s.confidence}</span></td>
+        <td style="color:var(--text3);font-size:12px">${s.tier}</td>
+      </tr>`;
+    });
+  }
+}
+
+// ── SETUP / HISTORY ───────────────────────────────────────────────────────
+function renderSetup(snaps, fv) {
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  snaps.slice().reverse().forEach(s => {
+    const st = computeStats(s.listings, fv);
+    const pct = st.count ? Math.round(st.belowFV/st.count*100) : 0;
+    tbody.innerHTML += `<tr>
+      <td>${s.date}</td>
+      <td>${s.year}</td>
+      <td>${s.daysToFestival}d</td>
+      <td>${st.count}</td>
+      <td>${fmt(st.min)}</td>
+      <td>${fmt(st.avg)}</td>
+      <td>${fmt(st.median)}</td>
+      <td><span class="badge b-green">${pct}%</span></td>
+      <td style="color:var(--text3);font-size:12px">${s.source||'—'}</td>
+    </tr>`;
+  });
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

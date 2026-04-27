@@ -1,0 +1,28 @@
+[build]
+  publish = "public"
+
+# No build step needed — it's a static site
+# Netlify just serves the public/ folder
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+# Redirects: make data files accessible from the root
+[[redirects]]
+  from = "/snapshots.json"
+  to   = "/data/snapshots.json"
+  status = 200
+
+[[redirects]]
+  from = "/events.json"
+  to   = "/data/events.json"
+  status = 200

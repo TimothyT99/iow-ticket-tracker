@@ -1,0 +1,11 @@
+{
+  "name": "iow-ticket-tracker",
+  "version": "1.0.0",
+  "description": "Isle of Wight Festival resale ticket price tracker",
+  "private": true,
+  "scripts": {
+    "scrape": "cd scraper && node scrape.js",
+    "scrape:dry": "cd scraper && node scrape.js --dry-run",
+    "scrape:2027": "cd scraper && node scrape.js --year 2027"
+  }
+}
