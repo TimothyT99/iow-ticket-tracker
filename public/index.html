@@ -265,9 +265,9 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="sec-title">How It Works</div>
     <div class="card card-p" style="font-size:13px;line-height:1.8;color:var(--text2)">
       <p><strong style="color:var(--blue)">Architecture</strong><br>
-      GitHub Actions runs the Playwright scraper on a schedule every 3 days, commits new data to
-      <code>data/snapshots.json</code>, and the commit triggers a Netlify rebuild. You never need to
-      run anything manually.</p><br>
+      GitHub Actions runs the Playwright scraper hourly during UK hours (06:00–22:00 UTC = 07:00–23:00 BST)
+      in peak season (Mar–Jun), and once daily in the off-season. Each run commits new data to
+      <code>data/snapshots.json</code>, which triggers a Netlify rebuild automatically.</p><br>
 
       <p><strong style="color:var(--blue)">Running a manual scrape</strong><br>
       Go to your GitHub repo → Actions → "Scrape Twickets Ticket Prices" → Run workflow.
@@ -289,8 +289,9 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       disappear likely sold below asking.</p><br>
 
       <p><strong style="color:var(--blue)">Scrape frequency strategy</strong><br>
-      Every 3 days is a good default. Consider running daily in the 2 weeks before the festival and
-      around announcement dates. The GitHub Actions workflow supports manual triggers for this.</p>
+      Hourly during UK waking hours (06:00–22:00 UTC) in peak season (Mar–Jun) — based on alert email
+      analysis confirming all Twickets listings appear 07:30–21:00 UK time with zero overnight activity.
+      Off-season: once daily. Trigger a manual run anytime from the GitHub Actions tab.</p>
     </div>
 
     <div class="sec-title">Snapshot History</div>

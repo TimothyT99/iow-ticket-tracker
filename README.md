@@ -1,8 +1,8 @@
 # IoW Festival Ticket Price Tracker
 
 Tracks resale prices for Isle of Wight Festival adult weekend camping tickets on Twickets.
-Automatically scrapes every 3 days via GitHub Actions, stores data in JSON, and serves a
-live dashboard via Netlify.
+Automatically scrapes via GitHub Actions on an optimised UK-hours schedule, stores data in JSON,
+and serves a live dashboard via Netlify.
 
 **What it does:**
 - 📊 Tracks asking prices over time vs face value
@@ -10,6 +10,22 @@ live dashboard via Netlify.
 - 🎯 Generates buy/sell timing signals
 - 📣 Marks lineup announcement dates on charts
 - 🗂 Multi-year — works for 2026, 2027, and beyond
+
+---
+
+## Scrape schedule
+
+Alert email analysis confirms all Twickets IoW listings appear between **07:30–21:00 UK time**
+with zero overnight activity. The schedule is optimised around this:
+
+| Period | Schedule | Runs/day | Budget |
+|---|---|---|---|
+| Peak season (Mar–Jun) | Hourly, 06:00–22:00 UTC (07:00–23:00 BST) | 17 | ~1,860–2,100 min/month |
+| Off-season (Jan–Feb, Jul–Dec) | Once daily at 08:00 UTC | 1 | ~124 min/month |
+
+GitHub Actions free tier: **2,000 min/month** (private repos). Playwright browser caching keeps
+each run to ~4 min. Monitor actual run times in the Actions tab in the first week of peak season —
+if runs average over 4.5 min, trim to `0 6-21 * 3-6 *` (drops the 22:00 run, saves ~4–5%).
 
 ---
 
@@ -54,7 +70,7 @@ git push -u origin main
 3. Click it → **Run workflow** → Run manually to test it works
 4. After it finishes, check `data/snapshots.json` has a new entry
 
-That's it. The scraper runs automatically every 3 days from here on.
+That's it. The scraper runs automatically on the schedule above from here on.
 
 ---
 
@@ -110,13 +126,13 @@ Commit and push — the chart markers update automatically.
 
 ```
 iow-ticket-tracker/
-├── .github/workflows/scrape.yml   ← GitHub Actions schedule (runs every 3 days)
+├── .github/workflows/scrape.yml   ← GitHub Actions schedule (hourly peak season, daily off-season)
 ├── scraper/
 │   ├── scrape.js                  ← Playwright scraper
 │   └── package.json
 ├── data/                          ← Source of truth (committed by scraper bot)
 │   ├── snapshots.json             ← All price snapshots
-│   └── events.json                ← Festival config & announcement dates
+│   └── events.json                ← Festival config, announcement dates & historical baselines
 ├── public/                        ← What Netlify serves
 │   ├── index.html                 ← Dashboard
 │   └── data/                      ← Copy of data/ (keep in sync)
@@ -133,7 +149,7 @@ iow-ticket-tracker/
 
 ## How the scraper works
 
-1. Launches a headless Chromium browser (via Playwright)
+1. Launches a headless Chromium browser (via Playwright — cached between runs)
 2. Navigates to the Twickets event page
 3. Dismisses the cookie banner
 4. Clicks "Load more" until all listings are visible
@@ -150,15 +166,17 @@ Confidence is `high` if the fingerprint was unique, `low` if duplicates existed.
 
 ## Adjusting scrape frequency
 
-Edit `.github/workflows/scrape.yml`:
+Edit `.github/workflows/scrape.yml`. Current schedule:
 
 ```yaml
 schedule:
-  - cron: '0 8 * * *'   # daily at 08:00 UTC — change to '0 8 */3 * *' for every 3 days
+  - cron: '0 6-22 * 3-6 *'     # Mar–Jun: hourly, 06:00–22:00 UTC (= 07:00–23:00 BST)
+  - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 ```
 
-The scraper skips runs automatically if a snapshot already exists for that day, so running daily
-is safe and won't create duplicate entries. You can also trigger manually from the Actions tab.
+To reduce budget usage, change `6-22` to a narrower window, e.g. `0 7-20 * 3-6 *` drops to
+14 runs/day. The scraper skips automatically if a snapshot already exists for that hour, so
+duplicate entries are never created. Trigger manually from the Actions tab at any time.
 
 ---
 
