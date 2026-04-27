@@ -1,4 +1,83 @@
 {
+  "historicalBaselines": {
+    "notes": "Face values and purchase dates confirmed from Tim's Ticketmaster order emails. All early bird purchases made ~June of the prior year (12 months out). Ticketmaster fee model changed: 2023–2024 had explicit per-ticket service charges; 2025–2026 fees appear bundled into face value (no separate charge shown). For like-for-like comparison, use orderTotal / ticket qty as the all-in per-ticket cost.",
+    "years": {
+      "2023": {
+        "purchaseDate": "2022-11-04",
+        "orderRef": "43-58734/UK5",
+        "ticketTypes": {
+          "weekend_adult": { "faceValue": 215.00, "qty": 2 }
+        },
+        "extras": { "child_ticket": 8.25, "programme_x2": 16.00 },
+        "fees": { "service_charge_per_ticket": 15.00, "handling": 3.25 },
+        "orderTotal": 487.50,
+        "allInPerAdult": 245.00,
+        "notes": "2 adult + 1 child. Bought Nov 2022 (~7 months out). Service charges explicit on top. All-in per adult = (£215 face + £15 service) = £230, but order total includes child + programme, so blended. Per-adult all-in = (487.50 - 8.25 - 16.00) / 2 = £231.63 approx."
+      },
+      "2024": {
+        "purchaseDate": "2023-06-23",
+        "orderRef": "37-55881/UK5",
+        "ticketTypes": {
+          "weekend_camping_adult":  { "faceValue": 190.00, "qty": 1 },
+          "weekend_camping_teen":   { "faceValue": 185.00, "qty": 1 },
+          "weekend_child":          { "faceValue": 14.00,  "qty": 1 }
+        },
+        "extras": { "programme_x1": 10.00 },
+        "fees": {
+          "service_charge_adult": 19.00,
+          "service_charge_teen":  18.50,
+          "handling": 3.25
+        },
+        "orderTotal": 439.75,
+        "allInPerAdult": 209.00,
+        "notes": "1 adult + 1 teen + 1 child. Bought Jun 2023 (~12 months out). Service charges explicit: £19 adult, £18.50 teen. All-in adult = £190 + £19 = £209. All-in teen = £185 + £18.50 = £203.50. Ticketmaster fee model still explicit at this point."
+      },
+      "2025": {
+        "purchaseDate": "2024-06-28",
+        "orderRef": "45-14242/UK5",
+        "ticketTypes": {
+          "early_bird_adult_camping":   { "faceValue": 220.35, "qty": 1 },
+          "early_bird_teen_camping":    { "faceValue": 214.85, "qty": 1 },
+          "early_bird_student_camping": { "faceValue": 214.85, "qty": 1 }
+        },
+        "extras": { "programme_x1": 10.00 },
+        "fees": {},
+        "orderTotal": 660.05,
+        "notes": "1 adult + 1 teen + 1 student. Bought Jun 2024 (~12 months out). Fees included in price — no separate service charge shown."
+      },
+      "2026": {
+        "purchaseDate": "2025-06-26",
+        "orderRef": "12-49265/UK5",
+        "ticketTypes": {
+          "sky_weekend_adult_early_bird": { "faceValue": 231.35, "qty": 3 }
+        },
+        "extras": { "programme_x1": 12.00 },
+        "fees": {},
+        "orderTotal": 706.05,
+        "notes": "3 × 'Sky presents the Isle of Wight Weekend Adult Ticket' — all show as Adult GA. Tim's group (2 adults + teen, teen on adult ticket or same-price tier). Bought Jun 2025 (~12 months out). Sky-sponsored early bird at £231.35 vs standard £368.",
+        "twicketsResale": {
+          "greg_order_ref": "001169AAX",
+          "listingId": "1056166819582381",
+          "purchaseDate": "2026-04-20",
+          "listingPrice": 223.00,
+          "offerMade": 210.00,
+          "offerAccepted": true,
+          "twicketsBuyerFee": 13.00,
+          "totalPaid": 223.00,
+          "tier": "Weekend Camping Ticket",
+          "daysToFestival": 59,
+          "feeNotes": "Twickets buyer fee structure: seller listed at £223; Greg offered £210; seller accepted. Twickets adds a buyer fee (~6.2% on accepted price) at checkout. £210 offer + ~£13 buyer fee = £223 total paid. The £223 is the confirmed all-in figure from the purchase confirmation email — no further charges on top.",
+          "comparisons": {
+            "timEarlyBirdAllIn": 231.35,
+            "gregTwicketsAllIn": 223.00,
+            "gregSaving": 8.35,
+            "note": "Greg's resale ticket (59 days out, offers needed) was £8.35 cheaper all-in than Tim's early bird (purchased 12 months out). However Tim had certainty, no bidding, and secured the Sky-sponsored rate."
+          },
+          "notes": "Greg's Twickets resale ticket. Seller: lottiefarrell03@gmail.com. Offer of £210 accepted, final all-in price £223 (incl. Twickets ~£13 buyer fee). Cheaper than Tim's early bird of £231.35 but required active monitoring and offer negotiation 59 days out."
+        }
+      }
+    }
+  },
   "years": {
     "2026": {
       "festival": {
@@ -10,6 +89,7 @@
       "faceValues": {
         "adult_camping": 368.00,
         "adult_non_camping": 285.02,
+        "early_bird_sky": 231.35,
         "early_bird_camping": 266.05,
         "premium_camping": 409.40,
         "glamping_2person": 1558.25
@@ -31,7 +111,7 @@
           "confirmed": false
         }
       ],
-      "notes": "IoW Festival 2026. Sky presents. Tickets went on sale approx Oct 2025."
+      "notes": "IoW Festival 2026. Sky presents. Early bird 'Sky' price was £231.35 (Tim's purchase Jun 2025). Standard face value £368."
     },
     "2027": {
       "festival": {

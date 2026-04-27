@@ -44,11 +44,16 @@
       "year": "2026",
       "date": "2026-04-20",
       "type": "sold",
+      "listingPrice": 223.00,
+      "offerAccepted": 210.00,
+      "twicketsBuyerFee": 13.00,
+      "totalPaid": 223.00,
       "price": 223.00,
       "tier": "Weekend Camping Ticket",
       "source": "email_purchase_confirmation",
       "reference": "001169AAX",
-      "notes": "Offer of £210 accepted by seller; final price £223 incl. Twickets buyer fee. Listing ID: 1056166819582381"
+      "listingId": "1056166819582381",
+      "notes": "Greg's ticket. Seller listed at £223; offer of £210 accepted. Twickets buyer fee ~£13 (≈6.2% on accepted price) added at checkout — total paid £223, confirmed from purchase email. All-in comparable to Ticketmaster: £223 vs Tim's early bird £231.35."
     },
     {
       "year": "2026",

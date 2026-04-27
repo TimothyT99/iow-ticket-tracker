@@ -2,9 +2,15 @@ name: Scrape Twickets Ticket Prices
 
 on:
   # ── Scheduled runs ───────────────────────────────────────────────────────
-  # Daily at 08:00 UTC — smart skip logic in scrape.js handles off-season
+  # Peak season (Mar–Jun): every 2 hours from 06:00–22:00 UTC
+  #   = 07:00–23:00 BST, covering UK waking hours (06:30–23:30 target).
+  #   Alert email analysis shows all Twickets listings appear 07:30–21:00 UK;
+  #   no overnight activity observed. Every-2h = 9 runs/day × ~5 min ≈ 1,350
+  #   min/month — within GitHub Actions free tier (2,000 min/month).
+  # Off-season (Jan–Feb, Jul–Dec): once daily at 08:00 UTC.
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '0 6-22/2 * 3-6 *'   # Mar–Jun: every 2h, 06:00–22:00 UTC
+    - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 
   # ── Manual trigger ───────────────────────────────────────────────────────
   # Run from GitHub → Actions → "Scrape Twickets Ticket Prices" → Run workflow
