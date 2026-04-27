@@ -56,24 +56,22 @@
         "orderTotal": 706.05,
         "notes": "3 × 'Sky presents the Isle of Wight Weekend Adult Ticket' — all show as Adult GA. Tim's group (2 adults + teen, teen on adult ticket or same-price tier). Bought Jun 2025 (~12 months out). Sky-sponsored early bird at £231.35 vs standard £368.",
         "twicketsResale": {
-          "greg_order_ref": "001169AAX",
-          "listingId": "1056166819582381",
           "purchaseDate": "2026-04-20",
           "listingPrice": 223.00,
           "offerMade": 210.00,
           "offerAccepted": true,
-          "twicketsBuyerFee": 13.00,
-          "totalPaid": 223.00,
+          "twicketsBuyerFee": 33.45,
+          "totalPaid": 243.45,
           "tier": "Weekend Camping Ticket",
           "daysToFestival": 59,
-          "feeNotes": "Twickets buyer fee structure: seller listed at £223; Greg offered £210; seller accepted. Twickets adds a buyer fee (~6.2% on accepted price) at checkout. £210 offer + ~£13 buyer fee = £223 total paid. The £223 is the confirmed all-in figure from the purchase confirmation email — no further charges on top.",
+          "feeNotes": "Twickets buyer fee structure: seller listed at £223; offer of £210 accepted by seller. Twickets buyer fee £33.45 (≈15.9% on accepted price) added at checkout. Confirmed all-in total: £243.45.",
           "comparisons": {
-            "timEarlyBirdAllIn": 231.35,
-            "gregTwicketsAllIn": 223.00,
-            "gregSaving": 8.35,
-            "note": "Greg's resale ticket (59 days out, offers needed) was £8.35 cheaper all-in than Tim's early bird (purchased 12 months out). However Tim had certainty, no bidding, and secured the Sky-sponsored rate."
+            "earlyBirdAllIn": 231.35,
+            "twicketsResaleAllIn": 243.45,
+            "resalePremium": 12.10,
+            "note": "Twickets resale (59 days out, offers required) was £12.10 more expensive all-in than the early bird purchased 12 months prior at £231.35. Early bird provided certainty and lower total cost."
           },
-          "notes": "Greg's Twickets resale ticket. Seller: lottiefarrell03@gmail.com. Offer of £210 accepted, final all-in price £223 (incl. Twickets ~£13 buyer fee). Cheaper than Tim's early bird of £231.35 but required active monitoring and offer negotiation 59 days out."
+          "notes": "Twickets resale ticket. Listing £223, offer £210 accepted. Twickets buyer fee £33.45 added at checkout (confirmed all-in: £243.45). Despite offer negotiation, ended up £12.10 more than early bird (£231.35). Purchased 59 days before festival."
         }
       }
     }

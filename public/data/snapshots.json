@@ -44,16 +44,16 @@
       "year": "2026",
       "date": "2026-04-20",
       "type": "sold",
+      "route": "twickets_resale",
+      "label": "Twickets Resale",
       "listingPrice": 223.00,
       "offerAccepted": 210.00,
-      "twicketsBuyerFee": 13.00,
-      "totalPaid": 223.00,
-      "price": 223.00,
+      "twicketsBuyerFee": 33.45,
+      "totalPaid": 243.45,
+      "price": 243.45,
       "tier": "Weekend Camping Ticket",
       "source": "email_purchase_confirmation",
-      "reference": "001169AAX",
-      "listingId": "1056166819582381",
-      "notes": "Greg's ticket. Seller listed at £223; offer of £210 accepted. Twickets buyer fee ~£13 (≈6.2% on accepted price) added at checkout — total paid £223, confirmed from purchase email. All-in comparable to Ticketmaster: £223 vs Tim's early bird £231.35."
+      "notes": "Twickets resale. Listing £223, offer £210 accepted, buyer fees £33.45 added at checkout (≈15.9% on accepted price). All-in: £243.45. Purchased 59 days before festival, offers required."
     },
     {
       "year": "2026",
@@ -62,7 +62,7 @@
       "askingPrice": 223.00,
       "offerPrice": 200.00,
       "source": "email_offer_rejected",
-      "notes": "First offer on listing 1056166819582381. Seller floor above £200."
+      "notes": "First offer rejected. Seller floor above £200."
     },
     {
       "year": "2026",
@@ -71,7 +71,7 @@
       "askingPrice": 223.00,
       "offerPrice": 210.00,
       "source": "email_offer_accepted",
-      "notes": "Second offer on listing 1056166819582381 accepted at £210."
+      "notes": "Second offer at £210 accepted."
     },
     {
       "year": "2026",
@@ -80,7 +80,7 @@
       "askingPrice": 220.00,
       "offerPrice": 200.00,
       "source": "email_offer_rejected",
-      "notes": "Offer on a different listing (ID: 734714287279792). Seller floor above £200."
+      "notes": "Offer on a separate listing rejected. Seller floor above £200."
     }
   ]
 }
