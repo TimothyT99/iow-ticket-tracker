@@ -2,8 +2,7 @@
   "meta": {
     "lastUpdated": "2026-04-27",
     "description": "IoW Festival adult camping resale price snapshots from Twickets",
-    "fingerprint": "price|qty|tier — used to infer sold listings via disappearance between snapshots",
-    "confidenceNote": "Unique fingerprints: high confidence sold. Duplicate fingerprints: ambiguous."
+    "fingerprint": "price|qty|tier — used to infer sold listings via disappearance between snapshots"
   },
   "snapshots": [
     {
@@ -36,7 +35,47 @@
         { "qty": 1, "price": 266.05, "tier": "Adult Weekend Camping GA",  "offers": false },
         { "qty": 2, "price": 266.05, "tier": "Adult Weekend Camping GA",  "offers": false },
         { "qty": 2, "price": 368.00, "tier": "Weekend Adult Camping",     "offers": false }
-      ]
+      ],
+      "inferredSold": []
+    }
+  ],
+  "confirmedTransactions": [
+    {
+      "year": "2026",
+      "date": "2026-04-20",
+      "type": "sold",
+      "price": 223.00,
+      "tier": "Weekend Camping Ticket",
+      "source": "email_purchase_confirmation",
+      "reference": "001169AAX",
+      "notes": "Offer of £210 accepted by seller; final price £223 incl. Twickets buyer fee. Listing ID: 1056166819582381"
+    },
+    {
+      "year": "2026",
+      "date": "2026-04-20",
+      "type": "offer_rejected",
+      "askingPrice": 223.00,
+      "offerPrice": 200.00,
+      "source": "email_offer_rejected",
+      "notes": "First offer on listing 1056166819582381. Seller floor above £200."
+    },
+    {
+      "year": "2026",
+      "date": "2026-04-20",
+      "type": "offer_accepted",
+      "askingPrice": 223.00,
+      "offerPrice": 210.00,
+      "source": "email_offer_accepted",
+      "notes": "Second offer on listing 1056166819582381 accepted at £210."
+    },
+    {
+      "year": "2026",
+      "date": "2026-04-20",
+      "type": "offer_rejected",
+      "askingPrice": 220.00,
+      "offerPrice": 200.00,
+      "source": "email_offer_rejected",
+      "notes": "Offer on a different listing (ID: 734714287279792). Seller floor above £200."
     }
   ]
 }

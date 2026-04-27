@@ -227,21 +227,31 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
   <!-- ═══════ LIKELY SOLD ═══════ -->
   <div id="tab-sold" class="tab-panel">
-    <div class="info">
-      <strong>How this works:</strong> Each snapshot fingerprints listings as <code>price|qty|tier</code>.
+    <div class="info green" style="margin-bottom:12px">
+      <strong>✅ Confirmed Transactions</strong> — sourced from Twickets purchase confirmation and offer emails.
+      These are actual prices paid (or rejected), making them the most reliable data points in the tracker.
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Asking</th><th>Offer / Paid</th><th>Notes</th></tr></thead>
+        <tbody id="confirmedBody"></tbody>
+      </table>
+    </div>
+
+    <div class="info" style="margin-top:20px">
+      <strong>Inferred Sold (scraper):</strong> Each snapshot fingerprints listings as <code>price|qty|tier</code>.
       When a fingerprint disappears between snapshots it's inferred as <em>likely sold</em>.
       High confidence = unique fingerprint. Low confidence = shared fingerprint (ambiguous).
-      "Accepting Offers" listings may have sold below the listed price.
     </div>
 
     <div class="stats-grid" id="soldStats"></div>
 
     <div class="card card-p" style="margin-bottom:20px">
-      <h3>Inferred Sold Prices vs Asking (scatter by days to festival)</h3>
+      <h3>Price Activity — Confirmed &amp; Inferred Sales vs Asking (scatter by days to festival)</h3>
       <canvas id="soldChart" style="max-height:280px"></canvas>
     </div>
 
-    <div class="sec-title">Sold Log</div>
+    <div class="sec-title">Inferred Sold Log</div>
     <div class="card">
       <table>
         <thead><tr><th>Disappeared</th><th>Price</th><th>Qty</th><th>Days Listed</th><th>Confidence</th><th>Tier</th></tr></thead>
@@ -691,46 +701,97 @@ function renderSold(snaps) {
   const all = getAllSoldInferred(snaps);
   const fv  = getEventConfig()?.faceValues?.adult_camping || 368;
 
-  // Stats
+  // Confirmed transactions from email data
+  const confirmedTx = (SNAPS.confirmedTransactions || []).filter(t => t.year === activeYear);
+  const confirmedBody = document.getElementById('confirmedBody');
+  confirmedBody.innerHTML = '';
+  if (!confirmedTx.length) {
+    confirmedBody.innerHTML = '<tr><td colspan="5" class="empty-state">No confirmed transactions yet — offer/purchase emails will populate this.</td></tr>';
+  } else {
+    confirmedTx.slice().sort((a,b) => b.date.localeCompare(a.date)).forEach(t => {
+      const typeLabel = t.type === 'sold'
+        ? '<span class="badge b-green">✅ Sold</span>'
+        : t.type === 'offer_accepted'
+        ? '<span class="badge b-blue">🤝 Offer Accepted</span>'
+        : '<span class="badge b-grey">❌ Rejected</span>';
+      const askCol   = t.askingPrice ? fmt(t.askingPrice) : '—';
+      const paidCol  = t.price       ? `<strong>${fmt(t.price)}</strong>` : (t.offerPrice ? fmt(t.offerPrice) : '—');
+      confirmedBody.innerHTML += `<tr>
+        <td>${t.date}</td>
+        <td>${typeLabel}</td>
+        <td>${askCol}</td>
+        <td>${paidCol}</td>
+        <td style="color:var(--text3);font-size:12px">${t.notes||t.tier||'—'}</td>
+      </tr>`;
+    });
+  }
+
+  // Inferred sold stats
   const soldGrid = document.getElementById('soldStats');
   soldGrid.innerHTML = '';
-  if (all.length) {
-    const prices = all.map(s => s.price);
-    const avgSold = prices.reduce((a,b)=>a+b,0)/prices.length;
+  const confirmedSold = confirmedTx.filter(t => t.type === 'sold');
+  const allPrices = [
+    ...all.map(s => s.price),
+    ...confirmedSold.map(t => t.price),
+  ];
+  if (allPrices.length) {
+    const avgSold = allPrices.reduce((a,b)=>a+b,0)/allPrices.length;
     const highConf = all.filter(s=>s.confidence==='high').length;
     const cards2 = [
-      { v: all.length,          l: 'Likely Sold', c: 'c-purple' },
-      { v: fmt(Math.min(...prices)), l: 'Lowest Sold', c: 'c-green'  },
-      { v: fmt(avgSold),        l: 'Avg Sold',     c: 'c-blue'   },
-      { v: fmt(Math.max(...prices)), l: 'Highest Sold',c: 'c-orange' },
-      { v: highConf,            l: 'High Confidence', c: 'c-green' },
+      { v: all.length + confirmedSold.length, l: 'Total Sold', c: 'c-purple' },
+      { v: confirmedSold.length,              l: 'Confirmed',  c: 'c-green'  },
+      { v: fmt(Math.min(...allPrices)),        l: 'Lowest Sold',c: 'c-green'  },
+      { v: fmt(avgSold),                       l: 'Avg Sold',   c: 'c-blue'   },
+      { v: fmt(Math.max(...allPrices)),        l: 'Highest Sold',c: 'c-orange' },
     ];
     cards2.forEach(c => {
       soldGrid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
     });
   }
 
-  // Sold chart (scatter)
+  // Scatter chart — confirmed sold + inferred sold + asking
   destroyChart('sold');
-  const askData  = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: +l.price })));
-  const soldData = all.map(s => ({ x: s.snapshotDaysTo, y: s.price }));
+  const askData       = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: +l.price })));
+  const inferredData  = all.map(s => ({ x: s.snapshotDaysTo, y: s.price }));
+  // Confirmed sold: map date → days to festival
+  const festivalDate  = getEventConfig()?.festival?.date || null;
+  const confirmedData = confirmedSold.map(t => {
+    let daysTo = null;
+    if (festivalDate) {
+      const msPerDay = 86400000;
+      daysTo = Math.round((new Date(festivalDate) - new Date(t.date)) / msPerDay);
+    }
+    return { x: daysTo, y: t.price, label: t.notes };
+  }).filter(d => d.x !== null);
+  // Offer floors (rejected offers = ceiling on what sellers will accept)
+  const rejectedData = confirmedTx.filter(t => t.type === 'offer_rejected').map(t => {
+    let daysTo = null;
+    if (festivalDate) {
+      const msPerDay = 86400000;
+      daysTo = Math.round((new Date(festivalDate) - new Date(t.date)) / msPerDay);
+    }
+    return { x: daysTo, y: t.offerPrice };
+  }).filter(d => d.x !== null);
+
   charts.sold = new Chart(document.getElementById('soldChart'), {
     type:'scatter',
     data:{ datasets:[
-      { label:'Asking prices', data:askData, backgroundColor:'#58a6ff44', borderColor:'#58a6ff', pointRadius:4 },
-      { label:'Likely sold',   data:soldData, backgroundColor:'#3fb95099', borderColor:'#3fb950', pointRadius:7, pointStyle:'star' },
+      { label:'Asking prices',    data:askData,        backgroundColor:'#58a6ff33', borderColor:'#58a6ff88', pointRadius:4 },
+      { label:'Inferred sold',    data:inferredData,   backgroundColor:'#3fb95099', borderColor:'#3fb950',   pointRadius:7, pointStyle:'star' },
+      { label:'✅ Confirmed sold', data:confirmedData,  backgroundColor:'#f9ec1099', borderColor:'#f9ec10',   pointRadius:10, pointStyle:'triangle' },
+      { label:'❌ Rejected offer', data:rejectedData,   backgroundColor:'#f8514955', borderColor:'#f85149',   pointRadius:6, pointStyle:'crossRot' },
       { label:`Face Value ${fmt(fv)}`, data:[{x:200,y:fv},{x:0,y:fv}], type:'line', borderColor:'rgba(255,107,53,.4)', borderDash:[8,4], pointRadius:0 },
     ]},
     options:{ ...CHART_DEFAULTS,
-      plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw?.y||0).toFixed(2)} @ ${ctx.raw?.x}d` } } },
+      plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw?.y||0).toFixed(2)} @ ${ctx.raw?.x}d to festival` } } },
       scales:{
         x:{ title:{display:true,text:'Days to Festival',color:'#8b949e'}, ticks:{color:'#8b949e'}, grid:{color:'#21262d'}, reverse:true, min:0, max:200 },
-        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:220, max:450 }
+        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:180, max:450 }
       }
     }
   });
 
-  // Sold log table
+  // Inferred sold log table
   const soldBody = document.getElementById('soldBody');
   soldBody.innerHTML = '';
   if (!all.length) {
