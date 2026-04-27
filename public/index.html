@@ -327,7 +327,9 @@ function init() {
     opt.value = y; opt.textContent = 'IoW ' + y;
     sel.appendChild(opt);
   });
-  setYear(years[0]);
+  // Default to the year that actually has snapshot data, not just the latest year
+  const yearsWithData = years.filter(y => SNAPS.snapshots.some(s => s.year === y));
+  setYear(yearsWithData[0] || years[0]);
 }
 
 function setYear(year) {
