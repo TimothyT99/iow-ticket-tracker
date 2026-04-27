@@ -12,6 +12,14 @@ on:
     - cron: '0 6-22/2 * 3-6 *'   # Mar–Jun: every 2h, 06:00–22:00 UTC
     - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 
+  # ── Push trigger (workflow file changes only) ─────────────────────────────
+  # Prevents "No jobs were run" check-suite failures when the workflow file
+  # is updated. The job's if: condition skips execution on push events so
+  # no actual scrape runs — just a clean green check.
+  push:
+    paths:
+      - '.github/workflows/scrape.yml'
+
   # ── Manual trigger ───────────────────────────────────────────────────────
   # Run from GitHub → Actions → "Scrape Twickets Ticket Prices" → Run workflow
   workflow_dispatch:
@@ -30,6 +38,10 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Skip on push events — push trigger exists only to prevent "No jobs were run"
+    # check-suite failures when this file is updated. Actual scrapes run on schedule
+    # or workflow_dispatch only.
+    if: github.event_name != 'push'
 
     steps:
       - name: Checkout repo
