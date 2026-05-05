@@ -397,16 +397,18 @@ function computeSignal(snaps, eventConfig) {
   const fv        = eventConfig?.faceValues?.adult_camping || 368;
   const today     = new Date().toISOString().split('T')[0];
   const daysTo    = daysBetween(today, eventConfig?.festival?.date || '2099-01-01');
-  const latest    = snaps[snaps.length - 1];
-  if (!latest) return { buy: 'insufficient', sell: 'insufficient', reason: 'No data yet' };
+  // Use most recent snapshot that actually has listings for price signals
+  const activeSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
+  const latest    = activeSnaps[activeSnaps.length - 1];
+  if (!latest) return { buySignal: 'insufficient', sellSignal: 'insufficient', buyReason: 'No listing data yet — market may be empty.', sellReason: 'No listing data yet.' };
 
   const stats     = computeStats(latest.listings, fv);
   const avgVsFV   = ((stats.avg - fv) / fv * 100).toFixed(1);
 
-  // Momentum: compare last two snapshots
+  // Momentum: compare last two non-empty snapshots
   let momentum    = 'flat';
-  if (snaps.length >= 2) {
-    const prev    = snaps[snaps.length - 2];
+  if (activeSnaps.length >= 2) {
+    const prev    = activeSnaps[activeSnaps.length - 2];
     const prevSt  = computeStats(prev.listings, fv);
     if (stats.avg < prevSt.avg - 5) momentum = 'falling';
     else if (stats.avg > prevSt.avg + 5) momentum = 'rising';
@@ -573,24 +575,30 @@ function renderTrends(snaps, config, fv) {
   }
 
   const notice = document.getElementById('trendNotice');
-  if (snaps.length < 2) {
-    const msg = snaps.length === 0
-      ? 'No snapshots yet — run the scraper to start collecting data.'
-      : `Only 1 snapshot so far (${snaps[0].date}). Trend lines appear once a second snapshot is collected. The hourly scraper will add the next one shortly.`;
+  const nonEmptySnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
+  if (snaps.length === 0) {
     notice.style.display = '';
-    notice.innerHTML = `⏳ <strong>Building trend data…</strong> ${msg}`;
-    if (snaps.length === 0) return;
+    notice.innerHTML = '⏳ <strong>No snapshots yet</strong> — run the scraper to start collecting data.';
+    return;
+  } else if (nonEmptySnaps.length === 0) {
+    const lastSnap = snaps[snaps.length - 1];
+    notice.style.display = '';
+    notice.innerHTML = `📭 <strong>No listings on Twickets right now.</strong> The scraper has been running (last check: ${lastSnap.date}) but found 0 adult camping tickets. The market may have dried up — check back closer to the festival or after a lineup announcement.`;
+  } else if (nonEmptySnaps.length < 2) {
+    notice.style.display = '';
+    notice.innerHTML = `⏳ <strong>Building trend data…</strong> Only 1 snapshot with listings so far (${nonEmptySnaps[0].date}). Trend lines appear once a second snapshot with listings is collected.`;
   } else {
     notice.style.display = 'none';
   }
 
   const labels = snaps.map(s => s.date.slice(5)); // MM-DD
-  const avgs   = snaps.map(s => computeStats(s.listings, fv).avg);
-  const mins   = snaps.map(s => computeStats(s.listings, fv).min);
+  // Use null (not undefined) for empty-market snapshots so Chart.js renders clean gaps
+  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg ?? null; });
+  const mins   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.min ?? null; });
   const counts = snaps.map(s => s.listings.length);
   const pctBelow = snaps.map(s => {
     const st = computeStats(s.listings, fv);
-    return st.count ? Math.round(st.belowFV / st.count * 100) : 0;
+    return st.count ? Math.round(st.belowFV / st.count * 100) : null;
   });
 
   // Announcement vertical lines as annotations (manual via dataset)
@@ -692,7 +700,7 @@ function renderSignals(snaps, config, fv) {
   const labels = snaps.map(s => s.date.slice(5));
   const avgs   = snaps.map(s => computeStats(s.listings, fv).avg);
   destroyChart('signal');
-  if (snaps.length < 2) {
+  if (nonEmptySnaps.length < 2) {
     document.getElementById('signalChart').style.display = 'none';
   } else {
     document.getElementById('signalChart').style.display = '';

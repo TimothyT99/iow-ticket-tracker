@@ -16,6 +16,8 @@ const path = require('path');
 const ROOT        = path.join(__dirname, '..');
 const EVENTS_FILE = path.join(ROOT, 'data', 'events.json');
 const SNAPS_FILE  = path.join(ROOT, 'data', 'snapshots.json');
+// public/data/ mirrors data/ so Netlify serves the latest snapshots
+const PUBLIC_SNAPS_FILE = path.join(ROOT, 'public', 'data', 'snapshots.json');
 
 const isDryRun = process.argv.includes('--dry-run');
 const yearArg  = process.argv.indexOf('--year');
@@ -142,11 +144,11 @@ async function scrape(eventConfig) {
       return results;
     });
 
-    log(`Extracted ${listings.length} total listings`);
+    log(`Extracted ${listings.length} total listings from page`);
 
     // Filter to adult camping only
     const campingListings = listings.filter(l => isAdultCamping(l.tier));
-    log(`Filtered to ${campingListings.length} adult camping listings`);
+    log(`Filtered to ${campingListings.length} adult camping listings (${listings.length - campingListings.length} excluded as non-camping/glamping/other)`);
 
     await browser.close();
     return campingListings;
@@ -242,10 +244,16 @@ async function main() {
     process.exit(0);
   }
 
-  // Skip if we already have a snapshot for today
-  const existingToday = snapsData.snapshots.find(s => s.date === today && s.year === year);
-  if (existingToday && !isDryRun) {
-    log(`Already have a snapshot for ${today} (year ${year}). Skipping.`);
+  // Skip if we already have a snapshot within the last 55 minutes
+  // (prevents accidental double-runs; allows hourly snapshots from the cron schedule)
+  const RECENT_WINDOW_MS = 55 * 60 * 1000;
+  const recentSnap = snapsData.snapshots.find(s => {
+    if (s.year !== year) return false;
+    const snapTime = new Date(s.timestamp).getTime();
+    return (Date.now() - snapTime) < RECENT_WINDOW_MS;
+  });
+  if (recentSnap && !isDryRun) {
+    log(`Already have a snapshot within the last 55 min (${recentSnap.timestamp}). Skipping.`);
     process.exit(0);
   }
 
@@ -259,15 +267,15 @@ async function main() {
     process.exit(1);
   }
 
+  // Build snapshot — write even when listings is empty so we have a complete record.
+  // An empty snapshot tells us the market was dry at this hour, which is useful data.
   if (!listings.length) {
-    log('No adult camping listings found — possible page structure change or no listings available.');
-    process.exit(0);
+    log('No adult camping listings found — market may be empty or page structure may have changed.');
   }
 
-  // Build snapshot
   const prevSnap   = snapsData.snapshots
     .filter(s => s.year === year)
-    .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0] || null;
 
   const newSnap = {
     year,
@@ -278,9 +286,14 @@ async function main() {
     listings,
     summary:       computeSummary(listings),
     inferredSold:  inferSold(prevSnap, { date: today, listings }),
+    ...(listings.length === 0 && { marketEmpty: true }),
   };
 
-  log(`Summary: ${newSnap.summary.count} listings, min £${newSnap.summary.min}, avg £${newSnap.summary.avg}, max £${newSnap.summary.max}`);
+  if (newSnap.summary.count) {
+    log(`Summary: ${newSnap.summary.count} listings, min £${newSnap.summary.min}, avg £${newSnap.summary.avg}, max £${newSnap.summary.max}`);
+  } else {
+    log('Summary: 0 adult camping listings (market empty snapshot written)');
+  }
   if (newSnap.inferredSold.length) {
     log(`Inferred ${newSnap.inferredSold.length} likely sold since last snapshot:`);
     newSnap.inferredSold.forEach(s => log(`  • £${s.price} x${s.qty} (${s.tier}) — confidence: ${s.confidence}`));
@@ -292,11 +305,13 @@ async function main() {
     process.exit(0);
   }
 
-  // Append to snapshots file
+  // Append to snapshots file (write to both data/ and public/data/ so Netlify serves latest)
   snapsData.meta.lastUpdated = today;
   snapsData.snapshots.push(newSnap);
-  fs.writeFileSync(SNAPS_FILE, JSON.stringify(snapsData, null, 2), 'utf8');
-  log(`✅ Snapshot written to ${SNAPS_FILE}`);
+  const snapsJson = JSON.stringify(snapsData, null, 2);
+  fs.writeFileSync(SNAPS_FILE, snapsJson, 'utf8');
+  fs.writeFileSync(PUBLIC_SNAPS_FILE, snapsJson, 'utf8');
+  log(`✅ Snapshot written to ${SNAPS_FILE} and ${PUBLIC_SNAPS_FILE}`);
 }
 
 main().catch(err => {
