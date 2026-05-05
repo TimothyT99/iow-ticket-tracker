@@ -37,12 +37,17 @@ on:
         default: false
 
 jobs:
+  # Runs only on push events (when scrape.yml itself is changed).
+  # Exists solely to give GitHub a green check — no scraping happens.
+  ack-push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - run: echo "scrape.yml updated — scraper runs on schedule/dispatch only, not on push."
+
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Skip on push events — push trigger exists only to prevent "No jobs were run"
-    # check-suite failures when this file is updated. Actual scrapes run on schedule
-    # or workflow_dispatch only.
     if: github.event_name != 'push'
 
     steps:
@@ -95,7 +100,7 @@ jobs:
           git add data/snapshots.json data/events.json public/data/snapshots.json
           # Only commit if there are actual changes
           if git diff --staged --quiet; then
-            echo "No changes to commit (snapshot already exists within last 55 min, or scraper skipped)"
+            echo "No changes to commit (snapshot already exists within last 12 min, or scraper skipped)"
           else
             # Derive code version from latest non-data tag or default
             CODE_VERSION=$(git tag --sort=-version:refname | grep '^v' | head -1 || echo "v1.000")
