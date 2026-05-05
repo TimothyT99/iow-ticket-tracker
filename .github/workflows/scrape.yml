@@ -106,15 +106,9 @@ jobs:
             CODE_VERSION=$(git tag --sort=-version:refname | grep '^v' | head -1 || echo "v1.000")
             SNAP_COUNT=$(node -e "const d=require('./data/snapshots.json'); console.log(d.snapshots.length)" 2>/dev/null || echo "?")
             TRIGGER="${{ github.event_name == 'workflow_dispatch' && 'manual' || 'scheduled' }}"
-            git commit -m "data: snapshot $(date +'%Y-%m-%d') @ ${CODE_VERSION}" -m \
-"Automated Twickets price scrape — ${TRIGGER} run.
-
-Snapshot #${SNAP_COUNT} appended to data/snapshots.json.
-Source: https://www.twickets.live/en/event/ (IoW Festival resale)
-Trigger: ${TRIGGER} (GitHub Actions)
-Runner: ubuntu-latest / Node 20 / Playwright chromium
-
-Netlify rebuild triggered on push."
+            git commit \
+              -m "data: snapshot $(date +'%Y-%m-%d') @ ${CODE_VERSION}" \
+              -m "Scrape #${SNAP_COUNT} — ${TRIGGER} run. Source: twickets.live IoW Festival resale. Netlify rebuild triggered."
             git push
             echo "✅ Data committed and pushed — Netlify rebuild triggered"
           fi
