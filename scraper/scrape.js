@@ -244,16 +244,16 @@ async function main() {
     process.exit(0);
   }
 
-  // Skip if we already have a snapshot within the last 55 minutes
-  // (prevents accidental double-runs; allows hourly snapshots from the cron schedule)
-  const RECENT_WINDOW_MS = 55 * 60 * 1000;
+  // Skip if we already have a snapshot within the last 12 minutes
+  // (prevents accidental double-runs while allowing the 15-min cron schedule through)
+  const RECENT_WINDOW_MS = 12 * 60 * 1000;
   const recentSnap = snapsData.snapshots.find(s => {
     if (s.year !== year) return false;
     const snapTime = new Date(s.timestamp).getTime();
     return (Date.now() - snapTime) < RECENT_WINDOW_MS;
   });
   if (recentSnap && !isDryRun) {
-    log(`Already have a snapshot within the last 55 min (${recentSnap.timestamp}). Skipping.`);
+    log(`Already have a snapshot within the last 12 min (${recentSnap.timestamp}). Skipping.`);
     process.exit(0);
   }
 

@@ -6,15 +6,12 @@ on:
   # 07:30–21:00 UK time with burst clusters. Zero overnight activity.
   # Target: hourly coverage 07:00–22:00 BST = 06:00–21:00 UTC.
   #
-  # Budget (GitHub Actions free tier: 2,000 min/month, private repo):
-  #   With Playwright browser caching: ~4 min/run
-  #   Peak season (Mar–Jun): 15 runs/day × 4 min × 31 days = 1,860 min ✅
-  #   Off-season: 1 run/day × 4 min × 31 days = 124 min ✅
-  #
-  # Peak schedule: hourly 07–21 UTC covers 08:00–22:00 BST (core activity window)
-  #   + shoulder runs at 06 and 22 UTC for early risers / late evening.
+  # Public repo = unlimited GitHub Actions minutes.
+  # Peak schedule: every 15 min during UK active hours (06:00–22:45 UTC = 07:00–23:45 BST)
+  #   → 64 runs/day — captures fast-moving listings that sell within minutes.
+  # Off-season: once daily at 08:00 UTC (no activity outside Mar–Jun).
   schedule:
-    - cron: '0 6-22 * 3-6 *'     # Mar–Jun: hourly, 06:00–22:00 UTC (= 07:00–23:00 BST)
+    - cron: '*/15 6-22 * 3-6 *'  # Mar–Jun: every 15 min, 06:00–22:45 UTC (= 07:00–23:45 BST)
     - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 
   # ── Push trigger (workflow file changes only) ─────────────────────────────

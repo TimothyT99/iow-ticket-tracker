@@ -16,16 +16,17 @@ and serves a live dashboard via Netlify.
 ## Scrape schedule
 
 Alert email analysis confirms all Twickets IoW listings appear between **07:30–21:00 UK time**
-with zero overnight activity. The schedule is optimised around this:
+with zero overnight activity. At peak season, listings sell within minutes of posting, so the
+schedule is tuned to capture fast-moving inventory.
 
-| Period | Schedule | Runs/day | Budget |
-|---|---|---|---|
-| Peak season (Mar–Jun) | Hourly, 06:00–22:00 UTC (07:00–23:00 BST) | 17 | ~1,860–2,100 min/month |
-| Off-season (Jan–Feb, Jul–Dec) | Once daily at 08:00 UTC | 1 | ~124 min/month |
+| Period | Schedule | Runs/day |
+|---|---|---|
+| Peak season (Mar–Jun) | Every 15 min, 06:00–22:45 UTC (07:00–23:45 BST) | 64 |
+| Off-season (Jan–Feb, Jul–Dec) | Once daily at 08:00 UTC | 1 |
 
-GitHub Actions free tier: **2,000 min/month** (private repos). Playwright browser caching keeps
-each run to ~4 min. Monitor actual run times in the Actions tab in the first week of peak season —
-if runs average over 4.5 min, trim to `0 6-21 * 3-6 *` (drops the 22:00 run, saves ~4–5%).
+This repo is **public**, so GitHub Actions minutes are unlimited. Playwright browser caching keeps
+each run to ~4 min. The scraper deduplicates within a 12-minute window to prevent accidental
+double-runs from a manual trigger coinciding with a scheduled one.
 
 ---
 
@@ -46,7 +47,7 @@ git add .
 git commit -m "Initial commit"
 ```
 
-Then on GitHub: **New repository** → name it `iow-ticket-tracker` → **Private** → don't initialise with README.
+Then on GitHub: **New repository** → name it `iow-ticket-tracker` → **Public** → don't initialise with README.
 
 ```bash
 git remote add origin https://github.com/YOUR_USERNAME/iow-ticket-tracker.git
@@ -126,7 +127,7 @@ Commit and push — the chart markers update automatically.
 
 ```
 iow-ticket-tracker/
-├── .github/workflows/scrape.yml   ← GitHub Actions schedule (hourly peak season, daily off-season)
+├── .github/workflows/scrape.yml   ← GitHub Actions schedule (every 15 min peak season, daily off-season)
 ├── scraper/
 │   ├── scrape.js                  ← Playwright scraper
 │   └── package.json
@@ -170,13 +171,15 @@ Edit `.github/workflows/scrape.yml`. Current schedule:
 
 ```yaml
 schedule:
-  - cron: '0 6-22 * 3-6 *'     # Mar–Jun: hourly, 06:00–22:00 UTC (= 07:00–23:00 BST)
+  - cron: '*/15 6-22 * 3-6 *'  # Mar–Jun: every 15 min, 06:00–22:45 UTC (= 07:00–23:45 BST)
   - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 ```
 
-To reduce budget usage, change `6-22` to a narrower window, e.g. `0 7-20 * 3-6 *` drops to
-14 runs/day. The scraper skips automatically if a snapshot already exists for that hour, so
-duplicate entries are never created. Trigger manually from the Actions tab at any time.
+The repo is public so GitHub Actions minutes are unlimited. To run more or less frequently,
+change `*/15` to any other interval (e.g. `*/10` for every 10 min, `*/30` for every 30 min).
+Also update the `RECENT_WINDOW_MS` constant in `scraper/scrape.js` to be slightly under your
+chosen interval (e.g. 8 min for a 10-min cron, 12 min for a 15-min cron). Trigger manually
+from the Actions tab at any time.
 
 ---
 
