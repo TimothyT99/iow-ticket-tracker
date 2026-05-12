@@ -259,12 +259,23 @@ async function main() {
 
   log(`Scraping year ${year}, ${daysToFest} days to festival...`);
 
+  // Retry up to 3 times — Twickets occasionally times out or returns a slow page
   let listings;
-  try {
-    listings = await scrape(eventConfig);
-  } catch (err) {
-    log(`Scrape failed: ${err.message}`);
-    process.exit(1);
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      listings = await scrape(eventConfig);
+      break; // success — exit retry loop
+    } catch (err) {
+      log(`Scrape attempt ${attempt}/${MAX_ATTEMPTS} failed: ${err.message}`);
+      if (attempt === MAX_ATTEMPTS) {
+        log('All attempts exhausted — exiting with failure.');
+        process.exit(1);
+      }
+      const waitSec = attempt * 15;
+      log(`Waiting ${waitSec}s before retry...`);
+      await new Promise(r => setTimeout(r, waitSec * 1000));
+    }
   }
 
   // Build snapshot — write even when listings is empty so we have a complete record.
