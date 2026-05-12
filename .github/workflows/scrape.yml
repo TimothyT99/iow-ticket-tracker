@@ -2,17 +2,15 @@ name: Scrape Twickets Ticket Prices
 
 on:
   # ── Scheduled runs ───────────────────────────────────────────────────────
-  # Alert email analysis (21–27 Apr): all IoW Twickets listings appear
-  # 07:30–21:00 UK time with burst clusters. Zero overnight activity.
-  # Target: hourly coverage 07:00–22:00 BST = 06:00–21:00 UTC.
+  # Primary 15-min triggering is handled by cron-job.org via workflow_dispatch
+  # (GitHub's own scheduler throttles to ~hourly on public repos).
   #
-  # Public repo = unlimited GitHub Actions minutes.
-  # Peak schedule: every 15 min during UK active hours (06:00–22:45 UTC = 07:00–23:45 BST)
-  #   → 64 runs/day — captures fast-moving listings that sell within minutes.
-  # Off-season: once daily at 08:00 UTC (no activity outside Mar–Jun).
+  # These fallback schedules activate if cron-job.org goes down:
+  #   Peak (Mar–Jun): hourly 07:00–21:00 UTC — keeps data flowing as a safety net
+  #   Off-season: once daily 08:00 UTC
   schedule:
-    - cron: '*/15 6-22 * 3-6 *'  # Mar–Jun: every 15 min, 06:00–22:45 UTC (= 07:00–23:45 BST)
-    - cron: '0 8 * 1-2,7-12 *'   # Jan–Feb + Jul–Dec: once daily 08:00 UTC
+    - cron: '0 7-21 * 3-6 *'    # Mar–Jun fallback: hourly 07:00–21:00 UTC
+    - cron: '0 8 * 1-2,7-12 *'  # Jan–Feb + Jul–Dec: once daily 08:00 UTC
 
   # ── Push trigger (workflow file changes only) ─────────────────────────────
   # Prevents "No jobs were run" check-suite failures when the workflow file
