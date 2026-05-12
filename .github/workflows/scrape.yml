@@ -49,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name != 'push'
+    permissions:
+      contents: write   # needed to commit + push snapshot data
 
     steps:
       - name: Checkout repo
