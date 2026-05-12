@@ -154,6 +154,14 @@ async function scrape(eventConfig) {
     return campingListings;
 
   } catch (err) {
+    // Save a screenshot so we can see what Twickets showed on failure
+    try {
+      const screenshotPath = path.join(__dirname, '..', 'failure-screenshot.png');
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+      log(`Failure screenshot saved to ${screenshotPath}`);
+    } catch (ssErr) {
+      log(`Could not save screenshot: ${ssErr.message}`);
+    }
     await browser.close();
     throw err;
   }
