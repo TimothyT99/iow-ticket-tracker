@@ -586,7 +586,7 @@ function renderMarket(snaps, latest, fv) {
     {l:'>£368',   lo:368.01,hi:9999 },
   ];
   const bColors = ['#3fb950','#6ee7b7','#58a6ff','#79c0ff','#ff6b35','#a371f7'];
-  const bCounts = bands.map(b => latest.listings.filter(l=>+l.price>=b.lo&&+l.price<b.hi).length);
+  const bCounts = bands.map(b => campListings.filter(l=>+l.price>=b.lo&&+l.price<b.hi).length);
   charts.dist = new Chart(document.getElementById('distChart'), {
     type:'bar', data:{ labels:bands.map(b=>b.l), datasets:[{
       data:bCounts, backgroundColor:bColors.map(c=>c+'bb'), borderColor:bColors, borderWidth:1, borderRadius:4
@@ -596,12 +596,12 @@ function renderMarket(snaps, latest, fv) {
     }
   });
 
-  // FV donut
+  // FV donut — camping listings only
   destroyChart('fv');
   charts.fv = new Chart(document.getElementById('fvChart'), {
     type:'doughnut',
     data:{ labels:['Below FV','At FV','Above FV'], datasets:[{
-      data:[st.belowFV,st.atFV,st.aboveFV],
+      data:[stCamp.belowFV||0, stCamp.atFV||0, stCamp.aboveFV||0],
       backgroundColor:['#3fb95099','#58a6ff99','#a371f799'],
       borderColor:['#3fb950','#58a6ff','#a371f7'], borderWidth:2
     }]},
