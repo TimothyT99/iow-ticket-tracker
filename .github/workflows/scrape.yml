@@ -117,6 +117,10 @@ jobs:
             git commit \
               -m "data: snapshot $(date +'%Y-%m-%d') @ ${CODE_VERSION}" \
               -m "Scrape #${SNAP_COUNT} — ${TRIGGER} run. Source: twickets.live IoW Festival resale. Netlify rebuild triggered."
-            git push
+            # Push with rebase retry — cron-job.org and the GitHub Actions hourly fallback
+            # both fire at :00, causing concurrent runs. If the push is rejected (non-fast-forward),
+            # rebase onto the latest remote state and retry once. If another run already committed
+            # the same snapshot window the dedup check will have prevented a duplicate.
+            git push || (git pull --rebase origin main && git push)
             echo "✅ Data committed and pushed — Netlify rebuild triggered"
           fi
