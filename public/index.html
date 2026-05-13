@@ -255,7 +255,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="sec-title">Inferred Sold Log</div>
     <div class="card">
       <table>
-        <thead><tr><th>Disappeared</th><th>Price</th><th>Qty</th><th>Days Listed</th><th>Confidence</th><th>Tier</th></tr></thead>
+        <thead><tr><th>Disappeared</th><th>Price</th><th>Qty</th><th>Days Listed</th><th>Confidence</th><th>Outcome</th><th>Tier</th></tr></thead>
         <tbody id="soldBody"></tbody>
       </table>
     </div>
@@ -830,13 +830,15 @@ function renderSold(snaps) {
   ];
   if (allPrices.length) {
     const avgSold = allPrices.reduce((a,b)=>a+b,0)/allPrices.length;
-    const highConf = all.filter(s=>s.confidence==='high').length;
+    // Split inferred disappearances: ≤TM = likely sold, >TM = likely removed/relisted
+    const likelySold    = all.filter(s => allIn(s.price) <= tmPrice);
+    const likelyRemoved = all.filter(s => allIn(s.price) > tmPrice);
     const cards2 = [
-      { v: all.length + confirmedSold.length, l: 'Total Sold', c: 'c-purple' },
-      { v: confirmedSold.length,              l: 'Confirmed',  c: 'c-green'  },
-      { v: fmt(Math.min(...allPrices)),        l: 'Lowest Sold',c: 'c-green'  },
-      { v: fmt(avgSold),                       l: 'Avg Sold',   c: 'c-blue'   },
-      { v: fmt(Math.max(...allPrices)),        l: 'Highest Sold',c: 'c-orange' },
+      { v: likelySold.length + confirmedSold.length, l: 'Likely Sold (≤TM)', c: 'c-green'  },
+      { v: likelyRemoved.length,                     l: 'Removed/Relisted?', c: 'c-orange' },
+      { v: confirmedSold.length,                     l: 'Confirmed',          c: 'c-purple' },
+      { v: fmt(Math.min(...allPrices)),               l: 'Lowest All-in',      c: 'c-blue'   },
+      { v: fmt(avgSold),                              l: 'Avg All-in',         c: 'c-blue'   },
     ];
     cards2.forEach(c => {
       soldGrid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
@@ -846,8 +848,10 @@ function renderSold(snaps) {
   // Scatter chart — confirmed sold + inferred sold + asking
   destroyChart('sold');
   // All prices on scatter chart are all-in estimates
-  const askData       = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: allIn(+l.price) })));
-  const inferredData  = all.map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
+  const askData           = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: allIn(+l.price) })));
+  // Split inferred: ≤TM = likely sold, >TM = probably removed/relisted
+  const inferredSoldData    = all.filter(s => allIn(s.price) <= tmPrice).map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
+  const inferredRemovedData = all.filter(s => allIn(s.price) > tmPrice).map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
   // Confirmed sold: map date → days to festival
   const festivalDate  = getEventConfig()?.festival?.date || null;
   const confirmedData = confirmedSold.map(t => {
@@ -874,10 +878,11 @@ function renderSold(snaps) {
   charts.sold = new Chart(document.getElementById('soldChart'), {
     type:'scatter',
     data:{ datasets:[
-      { label:'Asking prices',    data:askData,        backgroundColor:'#58a6ff33', borderColor:'#58a6ff88', pointRadius:4 },
-      { label:'Inferred sold',    data:inferredData,   backgroundColor:'#3fb95099', borderColor:'#3fb950',   pointRadius:7, pointStyle:'star' },
-      { label:'✅ Confirmed sold', data:confirmedData,  backgroundColor:'#f9ec1099', borderColor:'#f9ec10',   pointRadius:10, pointStyle:'triangle' },
-      { label:'❌ Rejected offer', data:rejectedData,   backgroundColor:'#f8514955', borderColor:'#f85149',   pointRadius:6, pointStyle:'crossRot' },
+      { label:'Asking prices',              data:askData,             backgroundColor:'#58a6ff33', borderColor:'#58a6ff88', pointRadius:4 },
+      { label:'Inferred sold (≤TM)',        data:inferredSoldData,    backgroundColor:'#3fb95099', borderColor:'#3fb950',   pointRadius:7, pointStyle:'star' },
+      { label:'Likely removed/relisted (>TM)', data:inferredRemovedData, backgroundColor:'#e3b34155', borderColor:'#e3b341',   pointRadius:7, pointStyle:'rectRot' },
+      { label:'✅ Confirmed sold',           data:confirmedData,       backgroundColor:'#f9ec1099', borderColor:'#f9ec10',   pointRadius:10, pointStyle:'triangle' },
+      { label:'❌ Rejected offer',           data:rejectedData,        backgroundColor:'#f8514955', borderColor:'#f85149',   pointRadius:6, pointStyle:'crossRot' },
       { label:`Ticketmaster now (${fmt(tmPrice)})`, data:[{x:200,y:tmPrice},{x:0,y:tmPrice}], type:'line', borderColor:'rgba(255,107,53,.6)', borderDash:[8,4], pointRadius:0, borderWidth:2 },
     ]},
     options:{ ...CHART_DEFAULTS,
@@ -893,15 +898,20 @@ function renderSold(snaps) {
   const soldBody = document.getElementById('soldBody');
   soldBody.innerHTML = '';
   if (!all.length) {
-    soldBody.innerHTML = '<tr><td colspan="6" class="empty-state">No sold inferences yet — run a second snapshot.</td></tr>';
+    soldBody.innerHTML = '<tr><td colspan="7" class="empty-state">No sold inferences yet — run a second snapshot.</td></tr>';
   } else {
     all.sort((a,b) => b.disappearedDate.localeCompare(a.disappearedDate)).forEach(s => {
+      const aiPrice  = allIn(s.price);
+      const outcome  = aiPrice <= tmPrice
+        ? `<span class="badge b-green" title="All-in price ≤ Ticketmaster — likely a genuine sale">Likely sold</span>`
+        : `<span class="badge b-orange" title="All-in price above Ticketmaster — probably removed or relisted at a lower price">Removed?</span>`;
       soldBody.innerHTML += `<tr>
         <td>${s.disappearedDate}</td>
-        <td><strong>${fmt(allIn(s.price))}</strong> <span style="color:var(--text3);font-size:11px">(listed ${fmt(s.price)})</span>${s.offersAccepted?' <span class="badge b-grey" title="Actual price may be lower — offers accepted">Offers</span>':''}</td>
+        <td><strong>${fmt(aiPrice)}</strong> <span style="color:var(--text3);font-size:11px">(listed ${fmt(s.price)})</span>${s.offersAccepted?' <span class="badge b-grey" title="Actual price may be lower — offers accepted">Offers</span>':''}</td>
         <td>${s.qty}</td>
         <td>${s.daysListed}d</td>
         <td><span class="badge ${s.confidence==='high'?'b-green':'b-grey'}">${s.confidence}</span></td>
+        <td>${outcome}</td>
         <td style="color:var(--text3);font-size:12px">${s.tier}</td>
       </tr>`;
     });
