@@ -173,7 +173,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="sec-title">All Listings — Latest Snapshot</div>
     <div class="card">
       <table>
-        <thead><tr><th>Price</th><th>Qty</th><th>vs Face Value</th><th>Tier</th><th>Bar</th></tr></thead>
+        <thead><tr><th>Listed</th><th>All-in Est.</th><th>Qty</th><th>vs Ticketmaster</th><th>Tier</th><th>Bar</th></tr></thead>
         <tbody id="listingsBody"></tbody>
       </table>
     </div>
@@ -185,7 +185,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div id="trendNotice" class="info" style="display:none"></div>
 
     <div class="card card-p" style="margin-bottom:20px">
-      <h3>Avg & Min Ask Price Over Time — Days to Festival (right = closer)</h3>
+      <h3>Avg & Min Price Over Time — All-in Est. (incl. ~15.9% Twickets fee)</h3>
       <canvas id="trendChart" style="max-height:300px"></canvas>
     </div>
 
@@ -195,7 +195,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
         <canvas id="supplyChart"></canvas>
       </div>
       <div class="card card-p">
-        <h3>% Listings Below Face Value</h3>
+        <h3>% Listings Cheaper than Ticketmaster (all-in)</h3>
         <canvas id="pctBelowChart"></canvas>
       </div>
     </div>
@@ -355,6 +355,11 @@ const fmt    = p  => '£' + (+p).toFixed(2);
 const fmtS   = p  => '£' + Math.round(p);
 const daysBetween = (a, b) => Math.ceil((new Date(b) - new Date(a)) / 86400000);
 
+// Twickets buyer fee (~15.9% on transaction price, added at checkout)
+// All prices displayed on this dashboard are estimated all-in costs.
+const TWICKETS_FEE = 0.159;
+const allIn = p => Math.round(+p * (1 + TWICKETS_FEE) * 100) / 100;
+
 function getYearSnaps() {
   return SNAPS.snapshots
     .filter(s => s.year === activeYear)
@@ -395,6 +400,7 @@ function getAllSoldInferred(snaps) {
 // Buy/sell signal computation
 function computeSignal(snaps, eventConfig) {
   const fv        = eventConfig?.faceValues?.adult_camping || 368;
+  const tmPrice   = eventConfig?.baselines?.ticketmasterCurrent || 320;
   const today     = new Date().toISOString().split('T')[0];
   const daysTo    = daysBetween(today, eventConfig?.festival?.date || '2099-01-01');
   // Use most recent snapshot that actually has listings for price signals
@@ -403,9 +409,11 @@ function computeSignal(snaps, eventConfig) {
   if (!latest) return { buySignal: 'insufficient', sellSignal: 'insufficient', buyReason: 'No listing data yet — market may be empty.', sellReason: 'No listing data yet.' };
 
   const stats     = computeStats(latest.listings, fv);
-  const avgVsFV   = ((stats.avg - fv) / fv * 100).toFixed(1);
+  const avgAI     = allIn(stats.avg);   // all-in average
+  const minAI     = allIn(stats.min);   // all-in minimum
+  const avgVsTM   = ((avgAI - tmPrice) / tmPrice * 100).toFixed(1);
 
-  // Momentum: compare last two non-empty snapshots
+  // Momentum: compare last two non-empty snapshots (using all-in)
   let momentum    = 'flat';
   if (activeSnaps.length >= 2) {
     const prev    = activeSnaps[activeSnaps.length - 2];
@@ -421,18 +429,18 @@ function computeSignal(snaps, eventConfig) {
     return d >= -7 && d <= 14; // within a week past or 2 weeks before
   });
 
-  // Buy signal
+  // Buy signal — compare all-in resale vs Ticketmaster current price
   let buySignal, buyReason;
   if (daysTo < 7) {
     buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance, prices rising.`;
   } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
     buySignal = 'wait'; buyReason = `${nearAnn.label} announcement in ${daysBetween(today, nearAnn.date)} days — prices likely to spike. Consider waiting until 2 weeks after.`;
-  } else if (momentum === 'falling' && daysTo >= 14 && stats.avg < fv) {
-    buySignal = 'buy'; buyReason = `Avg price is falling (now ${fmt(stats.avg)}, ${Math.abs(avgVsFV)}% below FV). Good buying window with ${daysTo} days left.`;
-  } else if (daysTo >= 28 && daysTo <= 56 && stats.avg < fv) {
-    buySignal = 'watch'; buyReason = `In the typical discount window (${daysTo} days out). Average is ${fmt(stats.avg)} — monitor daily for further drops.`;
+  } else if (momentum === 'falling' && daysTo >= 14 && avgAI < tmPrice) {
+    buySignal = 'buy'; buyReason = `All-in avg is falling (now ${fmt(avgAI)}, ${Math.abs(avgVsTM)}% below Ticketmaster at ${fmt(tmPrice)}). Good buying window with ${daysTo} days left.`;
+  } else if (daysTo >= 14 && daysTo <= 56 && avgAI < tmPrice) {
+    buySignal = 'watch'; buyReason = `In the typical discount window (${daysTo} days out). All-in avg ${fmt(avgAI)} is below Ticketmaster (${fmt(tmPrice)}) — monitor for further drops.`;
   } else {
-    buySignal = 'wait'; buyReason = `Prices at ${fmt(stats.avg)} (avg). Not a clear discount yet — patience likely rewarded.`;
+    buySignal = 'wait'; buyReason = `All-in avg ${fmt(avgAI)} vs Ticketmaster ${fmt(tmPrice)}. ${avgAI >= tmPrice ? 'Resale currently at or above Ticketmaster — no advantage yet.' : 'Some deals available but avg isn\'t compelling.'}`;
   }
 
   // Sell signal
@@ -449,7 +457,7 @@ function computeSignal(snaps, eventConfig) {
     sellSignal = 'watch'; sellReason = `Market stable. Best sell windows: just before a lineup announcement, or the final 2 weeks.`;
   }
 
-  return { buySignal, buyReason, sellSignal, sellReason, stats, momentum, daysTo, fv };
+  return { buySignal, buyReason, sellSignal, sellReason, stats, momentum, daysTo, fv, tmPrice, avgAI, minAI };
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────────────
@@ -486,19 +494,22 @@ function renderMarket(snaps, latest, fv) {
     return;
   }
   const st = computeStats(latest.listings, fv);
-  info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${st.count}</strong> adult camping listings · Face value: <strong>${fmt(fv)}</strong> · Source: ${latest.source}`;
+  info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${st.count}</strong> adult camping listings · Prices shown are all-in estimates (listed price + ~15.9% Twickets buyer fee) · Source: ${latest.source}`;
 
   // Stats
   const grid = document.getElementById('statsGrid');
   grid.innerHTML = '';
+  const config    = getEventConfig();
+  const tmPrice   = config?.baselines?.ticketmasterCurrent || 320;
+  const belowTM   = latest.listings.filter(l => allIn(+l.price) < tmPrice).length;
   const cards = [
-    { v: fmt(st.min),    l: 'Lowest Ask',      c: 'c-blue'   },
-    { v: fmt(st.avg),    l: 'Average Ask',      c: 'c-green'  },
-    { v: fmt(st.median), l: 'Median Ask',       c: ''         },
-    { v: fmt(st.max),    l: 'Highest Ask',      c: 'c-orange' },
-    { v: st.count,       l: 'Listings',         c: 'c-purple' },
-    { v: st.belowFV,     l: 'Below Face Value', c: 'c-green'  },
-    { v: fmt(fv),        l: 'Face Value',       c: 'c-blue'   },
+    { v: fmt(allIn(st.min)),    l: 'Lowest All-in',             c: 'c-blue'   },
+    { v: fmt(allIn(st.avg)),    l: 'Avg All-in',                c: 'c-green'  },
+    { v: fmt(allIn(st.median)), l: 'Median All-in',             c: ''         },
+    { v: fmt(allIn(st.max)),    l: 'Highest All-in',            c: 'c-orange' },
+    { v: st.count,              l: 'Listings',                  c: 'c-purple' },
+    { v: belowTM,               l: `Cheaper than Ticketmaster`, c: 'c-green'  },
+    { v: fmt(tmPrice),          l: 'Ticketmaster Now',          c: 'c-blue'   },
   ];
   cards.forEach(c => {
     grid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
@@ -541,17 +552,20 @@ function renderMarket(snaps, latest, fv) {
   const tbody = document.getElementById('listingsBody');
   tbody.innerHTML = '';
   const sorted = [...latest.listings].sort((a,b) => +a.price - +b.price);
+  const tmPriceRow = getEventConfig()?.baselines?.ticketmasterCurrent || 320;
   sorted.forEach(l => {
-    const diff   = +l.price - fv;
-    const isBelow= +l.price < fv, isAbove = +l.price > fv;
+    const allInPrice = allIn(+l.price);
+    const diff   = allInPrice - tmPriceRow;
+    const isBelow= allInPrice < tmPriceRow, isAbove = allInPrice > tmPriceRow;
     const bc     = isBelow ? 'b-green' : isAbove ? 'b-purple' : 'b-blue';
-    const fvText = +l.price===fv ? 'Face value' : (diff>0?'+':'')+fmt(Math.abs(diff))+(isBelow?' below':' above');
-    const barW   = Math.round((+l.price/500)*100);
+    const tmText = Math.abs(diff) < 0.5 ? 'At Ticketmaster price' : (diff>0?'+':'')+fmt(Math.abs(diff))+(isBelow?' below TM':' above TM');
+    const barW   = Math.round((allInPrice/500)*100);
     const barC   = isBelow ? '#3fb950' : isAbove ? '#a371f7' : '#58a6ff';
     tbody.innerHTML += `<tr>
-      <td><strong>${fmt(+l.price)}</strong></td>
+      <td>${fmt(+l.price)}</td>
+      <td><strong>${fmt(allInPrice)}</strong></td>
       <td>${l.qty}</td>
-      <td><span class="badge ${bc}">${fvText}</span>${l.offers?' <span class="badge b-grey">Offers</span>':''}</td>
+      <td><span class="badge ${bc}">${tmText}</span>${l.offers?' <span class="badge b-grey">Offers</span>':''}</td>
       <td style="color:var(--text3);font-size:12px">${l.tier}</td>
       <td><span class="bar-spark" style="width:${barW}px;background:${barC}"></span></td>
     </tr>`;
@@ -592,13 +606,18 @@ function renderTrends(snaps, config, fv) {
   }
 
   const labels = snaps.map(s => s.date.slice(5)); // MM-DD
+  const bl     = config?.baselines || {};
+  const tmRef  = bl.ticketmasterCurrent || 320;
+  const ebRef  = bl.ownerEarlyBird || 231.35;
+  const grRef  = bl.gregsResale || 243.45;
   // Use null (not undefined) for empty-market snapshots so Chart.js renders clean gaps
-  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg ?? null; });
-  const mins   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.min ?? null; });
+  // All prices are all-in estimates (listed price + ~15.9% Twickets buyer fee)
+  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg != null ? allIn(st.avg) : null; });
+  const mins   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.min != null ? allIn(st.min) : null; });
   const counts = snaps.map(s => s.listings.length);
   const pctBelow = snaps.map(s => {
     const st = computeStats(s.listings, fv);
-    return st.count ? Math.round(st.belowFV / st.count * 100) : null;
+    return st.count ? Math.round(s.listings.filter(l => allIn(+l.price) < tmRef).length / st.count * 100) : null;
   });
 
   // Announcement vertical lines as annotations (manual via dataset)
@@ -617,15 +636,17 @@ function renderTrends(snaps, config, fv) {
   charts.trend = new Chart(document.getElementById('trendChart'), {
     type:'line',
     data:{ labels, datasets:[
-      { label:'Avg Ask',    data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
-      { label:'Min Ask',   data:mins, borderColor:'#3fb950', backgroundColor:'transparent', tension:.3, borderDash:[5,3], pointRadius:5, pointBackgroundColor:'#3fb950' },
-      { label:`Face Value ${fmt(fv)}`, data:snaps.map(()=>fv), borderColor:'rgba(255,107,53,0.5)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
+      { label:'Avg (all-in)',           data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
+      { label:'Min (all-in)',           data:mins, borderColor:'#3fb950', backgroundColor:'transparent', tension:.3, borderDash:[5,3], pointRadius:5, pointBackgroundColor:'#3fb950' },
+      { label:`Ticketmaster now (${fmt(tmRef)})`, data:snaps.map(()=>tmRef), borderColor:'rgba(255,107,53,0.8)', tension:0, fill:false, pointRadius:0, borderDash:[8,4], borderWidth:2 },
+      { label:`Owner early bird (${fmt(ebRef)})`, data:snaps.map(()=>ebRef), borderColor:'rgba(63,185,80,0.6)',  tension:0, fill:false, pointRadius:0, borderDash:[4,4], borderWidth:1 },
+      { label:`Greg's resale (${fmt(grRef)})`,    data:snaps.map(()=>grRef), borderColor:'rgba(163,113,247,0.6)',tension:0, fill:false, pointRadius:0, borderDash:[4,4], borderWidth:1 },
     ]},
     options:{ ...CHART_DEFAULTS,
       plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw||0).toFixed(2)}` } } },
       scales:{
         x:{ ticks:{color:'#8b949e'}, grid:{color:'#21262d'} },
-        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:220, max:430 }
+        y:{ ticks:{color:'#8b949e',callback:v=>'£'+v}, grid:{color:'#21262d'}, min:200, max:430 }
       }
     }
   });
@@ -662,7 +683,7 @@ function renderSignals(snaps, config, fv) {
       <div class="signal-body">
         <h4>${sig.buySignal === 'buy' ? '✅ Good Time to Buy' : sig.buySignal === 'urgent' ? '⚡ Buy Urgently' : sig.buySignal === 'watch' ? '👀 Watch the Market' : '⏳ Wait to Buy'}</h4>
         <p>${sig.buyReason || 'Insufficient data'}</p>
-        ${sig.stats ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">Current avg: ${fmt(sig.stats.avg)} · Min available: ${fmt(sig.stats.min)} · FV: ${fmt(sig.fv)}</p>` : ''}
+        ${sig.stats ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">All-in avg: ${fmt(sig.avgAI)} · Min all-in: ${fmt(sig.minAI)} · Ticketmaster now: ${fmt(sig.tmPrice)}</p>` : ''}
       </div>
     </div>
     <div class="signal ${signalClass[sig.sellSignal]||'wait'}">

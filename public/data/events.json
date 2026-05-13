@@ -105,7 +105,12 @@
           "confirmed": false
         }
       ],
-      "notes": "IoW Festival 2026. Sky presents. Early bird 'Sky' price was £231.35 (owner's purchase Jun 2025). Standard face value £368."
+      "baselines": {
+        "ticketmasterCurrent": 320.00,
+        "ownerEarlyBird": 231.35,
+        "gregsResale": 243.45
+      },
+      "notes": "IoW Festival 2026. Sky presents. Early bird 'Sky' price was £231.35 (owner's purchase Jun 2025). Standard face value £368. Ticketmaster current price £320 (May 2026). Greg's resale all-in £243.45 (Apr 2026)."
     },
     "2027": {
       "festival": {
