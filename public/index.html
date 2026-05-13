@@ -386,9 +386,7 @@ function classifyTier(tier) {
   const t = (tier || '').toLowerCase();
   if (NON_CAMPING_KW.some(k => t.includes(k))) return 'non_camping';
   if (CAMPING_KW.some(k => t.includes(k))) return 'camping';
-  // Plain 'General Admission' — genuine festival ticket with no camping qualifier.
-  // Ferry/coach/add-on listings are filtered out by the scraper's EXCLUDE_KEYWORDS
-  // before they ever get stored, so anything reaching here is a real ticket.
+  // Plain 'General Admission' without a camping qualifier → non_camping
   if (GENERAL_ADM_KW.some(k => t.includes(k))) return 'non_camping';
   return 'unknown';
 }

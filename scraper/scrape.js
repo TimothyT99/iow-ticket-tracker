@@ -66,20 +66,14 @@ const EXCLUDE_KEYWORDS     = ['child', 'parking', 'car park', 'glamping', 'lodge
 /**
  * Classify a tier name as 'camping', 'non_camping', or null (exclude entirely).
  * Returns null for anything that isn't a recognisable adult weekend ticket.
- *
- * Classification order matters:
- *   1. Exclude junk entirely (ferry, glamping, car park, etc.) — checked first
- *   2. Non-camping keywords (before camping, since 'non-camping' contains 'camping')
- *   3. Camping keywords
- *   4. Plain 'General Admission' — no camping qualifier, treated as non_camping.
- *      These are genuine festival tickets on Twickets; ferry/coach add-ons are
- *      caught by the exclude check above before reaching this point.
  */
 function classifyTier(tier) {
   const t = tier.toLowerCase();
   if (EXCLUDE_KEYWORDS.some(k => t.includes(k))) return null;
   if (NON_CAMPING_KEYWORDS.some(k => t.includes(k))) return 'non_camping';
   if (CAMPING_KEYWORDS.some(k => t.includes(k))) return 'camping';
+  // Plain 'General Admission' with no camping qualifier — treated as non_camping
+  // (e.g. "General Admission" vs "General Admission Camping" which is caught above)
   if (GENERAL_ADMISSION_KW.some(k => t.includes(k))) return 'non_camping';
   return null; // unrecognised — exclude rather than misclassify
 }
