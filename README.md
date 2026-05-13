@@ -16,17 +16,22 @@ and serves a live dashboard via Netlify.
 
 ## Ticket types tracked
 
-The IoW Festival Twickets page lists two adult weekend ticket types:
+Ticketmaster sells **Camping** and **Non-Camping** weekend tickets at the **same face value**
+(£368 standard / ~£320 current in 2026). The split is a capacity planning mechanism — Ticketmaster
+asks which you intend so they can manage campsite numbers, not a difference in festival access.
+Both give full access Thursday–Sunday.
 
-| Type | Ticketmaster face value | Notes |
-|---|---|---|
-| **Weekend Camping** | £368 (2026) | Festival access + campsite. Primary market. |
-| **Weekend Non-Camping** | £285.02 (2026) | Festival access only — no campsite. |
+> *"Please let us know if you're planning to camp on-site by choosing the relevant ticket option.
+> Whatever you choose, you'll still have access to the site from Thursday to enjoy the full weekend
+> of entertainment."* — Ticketmaster booking confirmation
 
-Both are tracked because they compete in the same Twickets resale pool and some buyers treat them
-as interchangeable. However, Ticketmaster prices them differently, so the dashboard keeps them
-separate: **stats, signals, and primary trend lines use camping tickets only**. Non-camping
-listings are shown with a badge and as a secondary series on the trends chart.
+**On resale, the two types behave differently.** Sellers often list non-camping tickets cheaper
+(assuming lower demand), and some buyers actively seek them out at a discount if they have camping
+sorted elsewhere. This psychological price gap is real even though the underlying product is identical.
+
+Both types are tracked and tagged. **Stats, signals, and primary trend lines use camping tickets**
+(more supply). Non-camping is shown as a lighter secondary series on the trends chart and badged
+in all tables — so any price divergence is measurable over time.
 
 ---
 

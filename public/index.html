@@ -289,13 +289,15 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       and a brief description of who was announced. These appear as markers on the trend chart.</p><br>
 
       <p><strong style="color:var(--blue)">Camping vs non-camping tickets</strong><br>
-      The IoW Festival Twickets page lists two types of adult weekend ticket: <strong>Camping</strong>
-      (weekend access + campsite) and <strong>Non-Camping</strong> (weekend access only). Ticketmaster
-      prices them differently (~£368 vs ~£285 in 2026), but on resale they share the same listing page
-      and compete in the same pool — some buyers are indifferent. The scraper captures both and tags
-      each listing. Stats, signals, and the primary trend line use camping tickets only (directly
-      comparable to the Ticketmaster camping price). Non-camping is shown as a separate, lighter series
-      on the trends chart and flagged with a badge in all tables.</p><br>
+      Ticketmaster sells <strong>Camping</strong> and <strong>Non-Camping</strong> weekend tickets at the
+      <em>same face value</em> — the split is a capacity planning mechanism so they can manage campsite
+      numbers, not a difference in festival access (both give full access Thursday–Sunday).
+      However, on resale the two types behave differently: sellers often list non-camping tickets cheaper
+      (assuming lower demand) and some buyers actively seek them out at a discount if they have camping
+      sorted elsewhere. This psychological price gap is real even though the underlying product is the same.
+      Both types are captured, tagged, and shown separately so the divergence is visible over time.
+      Stats, signals, and the primary trend line use camping tickets; non-camping is a lighter secondary
+      series on the trends chart and badged in all tables.</p><br>
 
       <p><strong style="color:var(--blue)">Fingerprinting &amp; sold inference</strong><br>
       Listing IDs are not exposed by Twickets, so each listing is identified by <code>price|qty|tier</code>.
@@ -549,15 +551,16 @@ function renderMarket(snaps, latest, fv) {
   info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${campListings.length}</strong> camping + <strong>${ncListings.length}</strong> non-camping listings · All-in estimates (listed price + ~15.9% Twickets fee) · Source: ${latest.source}`;
 
   // Camping/non-camping explainer
-  const ncFV = config?.faceValues?.adult_non_camping;
-  const ncFVNote = ncFV ? ` (Ticketmaster face value: £${ncFV.toFixed(2)})` : '';
+  const campFV = config?.faceValues?.adult_camping || 368;
   const marketInfoEl = document.getElementById('marketTypeInfo');
   if (marketInfoEl) {
-    marketInfoEl.innerHTML = `<strong>ℹ️ Two ticket types in this market:</strong>
-      <strong>Camping</strong> (weekend + campsite) · Ticketmaster face value £${(config?.faceValues?.adult_camping||368).toFixed(2)}.
-      <strong>Non-Camping</strong> (festival access only, no campsite)${ncFVNote}.
-      Ticketmaster prices them differently, but on resale they compete in the same pool — some buyers are happy with either.
-      <strong>Stats below are for camping tickets only</strong> (the primary market). Non-camping listings are shown in the table with a badge and as a separate series on the trends chart.`;
+    marketInfoEl.innerHTML = `<strong>ℹ️ Two ticket types — same face value, but resale market behaves differently:</strong>
+      Ticketmaster sells <strong>Camping</strong> and <strong>Non-Camping</strong> weekend tickets at the <em>same price</em> (${fmt(campFV)}) —
+      the split is a capacity planning mechanism, not a value difference. Both give full festival access Thursday–Sunday.
+      However, on resale, <strong>non-camping tickets often list and sell lower</strong> due to seller psychology
+      (perceived as less desirable) and buyer self-selection (people who have camping sorted elsewhere).
+      Both types are tracked separately so this real market divergence is visible. Stats and signals
+      use camping as the primary series; non-camping appears as a lighter secondary series.`;
   }
 
   // Stats — camping only
