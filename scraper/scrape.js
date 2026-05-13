@@ -58,7 +58,6 @@ function log(msg) {
 
 const NON_CAMPING_KEYWORDS = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
 const CAMPING_KEYWORDS     = ['camping', 'camp'];
-const GENERAL_ADMISSION_KW = ['general admission', 'general admit'];
 const EXCLUDE_KEYWORDS     = ['child', 'parking', 'car park', 'glamping', 'lodge', 't-shirt',
                                'lanyard', 'programme', 'ferry', 'coach', 'bus', 'harvest moon',
                                'lakeside'];
@@ -72,10 +71,7 @@ function classifyTier(tier) {
   if (EXCLUDE_KEYWORDS.some(k => t.includes(k))) return null;
   if (NON_CAMPING_KEYWORDS.some(k => t.includes(k))) return 'non_camping';
   if (CAMPING_KEYWORDS.some(k => t.includes(k))) return 'camping';
-  // Plain 'General Admission' with no camping qualifier — treated as non_camping
-  // (e.g. "General Admission" vs "General Admission Camping" which is caught above)
-  if (GENERAL_ADMISSION_KW.some(k => t.includes(k))) return 'non_camping';
-  return null; // unrecognised — exclude rather than misclassify
+  return null; // unrecognised (incl. plain 'General Admission' which may be ferry/add-on) — exclude
 }
 
 // ── SCRAPER ────────────────────────────────────────────────────────────────
