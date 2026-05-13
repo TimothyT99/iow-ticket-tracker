@@ -761,8 +761,9 @@ function renderSignals(snaps, config, fv) {
 
 // ── LIKELY SOLD ─────────────────────────────────────────────────────────────
 function renderSold(snaps) {
-  const all = getAllSoldInferred(snaps);
-  const fv  = getEventConfig()?.faceValues?.adult_camping || 368;
+  const all      = getAllSoldInferred(snaps);
+  const fv       = getEventConfig()?.faceValues?.adult_camping || 368;
+  const tmPrice  = getEventConfig()?.baselines?.ticketmasterCurrent || 320;
 
   // Reference purchases — two clean rows: Early Bird + Twickets Resale
   const confirmedTx  = (SNAPS.confirmedTransactions || []).filter(t => t.year === activeYear);
@@ -771,11 +772,11 @@ function renderSold(snaps) {
   const festDate     = getEventConfig()?.festival?.date;
   confirmedBody.innerHTML = '';
 
-  function fvBadge(perTicket, fv) {
-    const diff = fv - perTicket;
-    if (diff > 0) return `<span class="badge b-green">£${diff.toFixed(2)} below FV</span>`;
-    if (diff < 0) return `<span class="badge b-purple">£${Math.abs(diff).toFixed(2)} above FV</span>`;
-    return `<span class="badge b-blue">At face value</span>`;
+  function tmBadge(allInPrice) {
+    const diff = tmPrice - allInPrice;
+    if (diff > 0.5) return `<span class="badge b-green">£${diff.toFixed(2)} below TM</span>`;
+    if (diff < -0.5) return `<span class="badge b-purple">£${Math.abs(diff).toFixed(2)} above TM</span>`;
+    return `<span class="badge b-blue">At Ticketmaster price</span>`;
   }
 
   // Row 1: Ticketmaster early bird
@@ -792,7 +793,7 @@ function renderSold(snaps) {
       <td style="color:var(--text3)">~${daysOut} days</td>
       <td><strong>${fmt(perTicket)}</strong></td>
       <td>${fmt(baseline.orderTotal)} <span style="color:var(--text3);font-size:11px">(${ebQty}× + extras)</span></td>
-      <td>${fvBadge(perTicket, fv)}</td>
+      <td>${tmBadge(perTicket)}</td>
     </tr>`;
   }
 
@@ -810,7 +811,7 @@ function renderSold(snaps) {
       <td style="color:var(--text3)">~${daysOut2} days</td>
       <td><strong>${fmt(totalPaid)}</strong> <span style="color:var(--text3);font-size:11px">(offer ${offerPart} + fees ${feePart})</span></td>
       <td>${fmt(totalPaid)}</td>
-      <td>${fvBadge(totalPaid, fv)}</td>
+      <td>${tmBadge(totalPaid)}</td>
     </tr>`;
   }
 
@@ -822,9 +823,10 @@ function renderSold(snaps) {
   const soldGrid = document.getElementById('soldStats');
   soldGrid.innerHTML = '';
   const confirmedSold = confirmedTx.filter(t => t.type === 'sold');
+  // Use all-in prices throughout — inferred sold prices are listed prices, so apply fee
   const allPrices = [
-    ...all.map(s => s.price),
-    ...confirmedSold.map(t => t.totalPaid || t.price),
+    ...all.map(s => allIn(s.price)),
+    ...confirmedSold.map(t => t.totalPaid || t.price), // confirmed already all-in
   ];
   if (allPrices.length) {
     const avgSold = allPrices.reduce((a,b)=>a+b,0)/allPrices.length;
@@ -843,8 +845,9 @@ function renderSold(snaps) {
 
   // Scatter chart — confirmed sold + inferred sold + asking
   destroyChart('sold');
-  const askData       = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: +l.price })));
-  const inferredData  = all.map(s => ({ x: s.snapshotDaysTo, y: s.price }));
+  // All prices on scatter chart are all-in estimates
+  const askData       = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: allIn(+l.price) })));
+  const inferredData  = all.map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
   // Confirmed sold: map date → days to festival
   const festivalDate  = getEventConfig()?.festival?.date || null;
   const confirmedData = confirmedSold.map(t => {
@@ -875,7 +878,7 @@ function renderSold(snaps) {
       { label:'Inferred sold',    data:inferredData,   backgroundColor:'#3fb95099', borderColor:'#3fb950',   pointRadius:7, pointStyle:'star' },
       { label:'✅ Confirmed sold', data:confirmedData,  backgroundColor:'#f9ec1099', borderColor:'#f9ec10',   pointRadius:10, pointStyle:'triangle' },
       { label:'❌ Rejected offer', data:rejectedData,   backgroundColor:'#f8514955', borderColor:'#f85149',   pointRadius:6, pointStyle:'crossRot' },
-      { label:`Face Value ${fmt(fv)}`, data:[{x:200,y:fv},{x:0,y:fv}], type:'line', borderColor:'rgba(255,107,53,.4)', borderDash:[8,4], pointRadius:0 },
+      { label:`Ticketmaster now (${fmt(tmPrice)})`, data:[{x:200,y:tmPrice},{x:0,y:tmPrice}], type:'line', borderColor:'rgba(255,107,53,.6)', borderDash:[8,4], pointRadius:0, borderWidth:2 },
     ]},
     options:{ ...CHART_DEFAULTS,
       plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw?.y||0).toFixed(2)} @ ${ctx.raw?.x}d to festival` } } },
@@ -895,7 +898,7 @@ function renderSold(snaps) {
     all.sort((a,b) => b.disappearedDate.localeCompare(a.disappearedDate)).forEach(s => {
       soldBody.innerHTML += `<tr>
         <td>${s.disappearedDate}</td>
-        <td><strong>${fmt(s.price)}</strong>${s.offersAccepted?' <span class="badge b-grey" title="May have sold below asking">Offers</span>':''}</td>
+        <td><strong>${fmt(allIn(s.price))}</strong> <span style="color:var(--text3);font-size:11px">(listed ${fmt(s.price)})</span>${s.offersAccepted?' <span class="badge b-grey" title="Actual price may be lower — offers accepted">Offers</span>':''}</td>
         <td>${s.qty}</td>
         <td>${s.daysListed}d</td>
         <td><span class="badge ${s.confidence==='high'?'b-green':'b-grey'}">${s.confidence}</span></td>
@@ -917,9 +920,9 @@ function renderSetup(snaps, fv) {
       <td>${s.year}</td>
       <td>${s.daysToFestival}d</td>
       <td>${st.count}</td>
-      <td>${fmt(st.min)}</td>
-      <td>${fmt(st.avg)}</td>
-      <td>${fmt(st.median)}</td>
+      <td>${st.min ? fmt(allIn(st.min)) : '—'}</td>
+      <td>${st.avg ? fmt(allIn(st.avg)) : '—'}</td>
+      <td>${st.median ? fmt(allIn(st.median)) : '—'}</td>
       <td><span class="badge b-green">${pct}%</span></td>
       <td style="color:var(--text3);font-size:12px">${s.source||'—'}</td>
     </tr>`;
