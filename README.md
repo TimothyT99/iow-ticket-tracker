@@ -1,15 +1,32 @@
 # IoW Festival Ticket Price Tracker
 
-Tracks resale prices for Isle of Wight Festival adult weekend camping tickets on Twickets.
+Tracks resale prices for Isle of Wight Festival adult weekend tickets (camping and non-camping) on Twickets.
 Scrapes every 15 minutes via cron-job.org → GitHub Actions, stores data in JSON,
 and serves a live dashboard via Netlify.
 
 **What it does:**
 - 📊 Tracks all-in prices over time (listed price + ~15.9% Twickets buyer fee)
-- 💸 Infers likely sold prices from listing disappearances
-- 🎯 Generates buy/sell timing signals vs Ticketmaster current price
+- ⛺ Captures both camping and non-camping weekend tickets — tagged separately in data and charts
+- 💸 Infers likely sold prices from listing disappearances, with outcome classification
+- 🎯 Generates buy/sell timing signals vs Ticketmaster current price (camping only)
 - 📣 Marks lineup announcement dates on charts
 - 🗂 Multi-year — works for 2026, 2027, and beyond
+
+---
+
+## Ticket types tracked
+
+The IoW Festival Twickets page lists two adult weekend ticket types:
+
+| Type | Ticketmaster face value | Notes |
+|---|---|---|
+| **Weekend Camping** | £368 (2026) | Festival access + campsite. Primary market. |
+| **Weekend Non-Camping** | £285.02 (2026) | Festival access only — no campsite. |
+
+Both are tracked because they compete in the same Twickets resale pool and some buyers treat them
+as interchangeable. However, Ticketmaster prices them differently, so the dashboard keeps them
+separate: **stats, signals, and primary trend lines use camping tickets only**. Non-camping
+listings are shown with a badge and as a secondary series on the trends chart.
 
 ---
 
@@ -214,15 +231,24 @@ iow-ticket-tracker/
 3. Dismisses the cookie banner
 4. Clicks "Load more" until all listings are visible
 5. Extracts: price, quantity, tier name, "accepting offers" flag
-6. Filters to adult camping tickets only (keyword matching, excludes glamping, car parks, etc.)
-7. Computes summary stats and infers likely sold listings (vs previous snapshot)
-8. Appends new snapshot to `data/snapshots.json` and `public/data/snapshots.json`, then commits
+6. Classifies each listing as `camping` or `non_camping` by tier name keyword matching
+   - Excluded entirely: glamping, car parks, child tickets, ferry/coach add-ons, programmes, lanyards
+   - Non-camping keywords checked first (e.g. "non-camping", "no camping") to avoid false positives on tiers like "Weekend Adult Non-Camping" that contain "camping" as a substring
+7. Computes summary stats for all listings + separate breakdowns by type
+8. Infers likely sold listings vs previous snapshot
+9. Appends new snapshot to `data/snapshots.json` and `public/data/snapshots.json`, then commits
+
+**Ticket type classification:** `classifyTier(tier)` in `scraper/scrape.js` returns `camping`,
+`non_camping`, or `null` (exclude). The same logic is mirrored in the dashboard JS so historical
+snapshots without a stored `type` field are classified on the fly.
 
 **Sold price inference:** Listing IDs are not exposed by Twickets. Each listing is fingerprinted
-as `price|qty|tier`. When a fingerprint disappears between snapshots, it's logged as likely sold.
+as `price|qty|tier`. When a fingerprint disappears between snapshots, it's logged as either
+`likely sold` (all-in price ≤ Ticketmaster current price — a plausible sale) or
+`likely removed/relisted` (all-in > Ticketmaster — seller probably withdrew or relisted cheaper).
 Confidence is `high` if the fingerprint was unique, `low` if duplicates existed.
 
-**Empty market:** If Twickets shows 0 adult camping listings, a snapshot is still written with
+**Empty market:** If Twickets shows 0 classifiable listings, a snapshot is still written with
 `marketEmpty: true`. This records dry-market periods and Chart.js renders them as clean gaps.
 
 ---

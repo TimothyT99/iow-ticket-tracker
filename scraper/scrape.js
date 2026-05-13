@@ -37,18 +37,34 @@ function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
 }
 
-// Keyword filter — identifies adult camping tickets, excludes non-camping, glamping, car parks, etc.
-const CAMPING_KEYWORDS   = ['camping', 'camp'];
-const ADULT_KEYWORDS     = ['adult', 'weekend adult', 'adult weekend'];
-const EXCLUDE_KEYWORDS   = ['child', 'parking', 'car park', 'glamping', 'lodge', 't-shirt',
-                            'lanyard', 'programme', 'ferry', 'coach', 'bus', 'harvest moon',
-                            'lakeside', 'lodge'];
+// ── TICKET CLASSIFICATION ──────────────────────────────────────────────────
+//
+// Twickets uses free-text tier names, so we classify by keyword matching.
+//
+// Both camping and non-camping weekend tickets are tracked — they share the same
+// Twickets event page and compete in the same resale pool. However they have
+// different Ticketmaster face values (camping ~£368, non-camping ~£285) and are
+// kept separate in stats so the dashboard can show each market accurately.
+//
+// Entirely excluded: glamping, car parks, child tickets, ferry/coach add-ons,
+// programmes, lanyards, and similar non-ticket items.
 
-function isAdultCamping(tier) {
+const NON_CAMPING_KEYWORDS = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
+const CAMPING_KEYWORDS     = ['camping', 'camp'];
+const EXCLUDE_KEYWORDS     = ['child', 'parking', 'car park', 'glamping', 'lodge', 't-shirt',
+                               'lanyard', 'programme', 'ferry', 'coach', 'bus', 'harvest moon',
+                               'lakeside'];
+
+/**
+ * Classify a tier name as 'camping', 'non_camping', or null (exclude entirely).
+ * Returns null for anything that isn't a recognisable adult weekend ticket.
+ */
+function classifyTier(tier) {
   const t = tier.toLowerCase();
-  const hasCamping = CAMPING_KEYWORDS.some(k => t.includes(k));
-  const isExcluded = EXCLUDE_KEYWORDS.some(k => t.includes(k));
-  return hasCamping && !isExcluded;
+  if (EXCLUDE_KEYWORDS.some(k => t.includes(k))) return null;
+  if (NON_CAMPING_KEYWORDS.some(k => t.includes(k))) return 'non_camping';
+  if (CAMPING_KEYWORDS.some(k => t.includes(k))) return 'camping';
+  return null; // unrecognised — exclude rather than misclassify
 }
 
 // ── SCRAPER ────────────────────────────────────────────────────────────────
@@ -146,12 +162,18 @@ async function scrape(eventConfig) {
 
     log(`Extracted ${listings.length} total listings from page`);
 
-    // Filter to adult camping only
-    const campingListings = listings.filter(l => isAdultCamping(l.tier));
-    log(`Filtered to ${campingListings.length} adult camping listings (${listings.length - campingListings.length} excluded as non-camping/glamping/other)`);
+    // Classify each listing — keep camping + non_camping, drop unrecognised/excluded
+    const classifiedListings = listings
+      .map(l => ({ ...l, type: classifyTier(l.tier) }))
+      .filter(l => l.type !== null);
+
+    const campingCount    = classifiedListings.filter(l => l.type === 'camping').length;
+    const nonCampingCount = classifiedListings.filter(l => l.type === 'non_camping').length;
+    const excludedCount   = listings.length - classifiedListings.length;
+    log(`Classified: ${campingCount} camping, ${nonCampingCount} non-camping, ${excludedCount} excluded (glamping/add-ons/other)`);
 
     await browser.close();
-    return campingListings;
+    return classifiedListings;
 
   } catch (err) {
     // Save a screenshot so we can see what Twickets showed on failure
@@ -169,20 +191,33 @@ async function scrape(eventConfig) {
 
 // ── STATS ──────────────────────────────────────────────────────────────────
 
-function computeSummary(listings) {
-  if (!listings.length) return {};
-  const prices = listings.map(l => l.price).sort((a, b) => a - b);
-  const sum    = prices.reduce((s, p) => s + p, 0);
-  const n      = prices.length;
+function statsForPrices(prices) {
+  if (!prices.length) return null;
+  const sorted = [...prices].sort((a, b) => a - b);
+  const sum    = sorted.reduce((s, p) => s + p, 0);
+  const n      = sorted.length;
   const median = n % 2 === 0
-    ? (prices[n/2 - 1] + prices[n/2]) / 2
-    : prices[Math.floor(n/2)];
+    ? (sorted[n/2 - 1] + sorted[n/2]) / 2
+    : sorted[Math.floor(n/2)];
   return {
     count:  n,
-    min:    prices[0],
-    max:    prices[n - 1],
+    min:    sorted[0],
+    max:    sorted[n - 1],
     avg:    Math.round((sum / n) * 100) / 100,
     median: Math.round(median * 100) / 100,
+  };
+}
+
+function computeSummary(listings) {
+  if (!listings.length) return {};
+  const allPrices     = listings.map(l => l.price);
+  const campPrices    = listings.filter(l => (l.type || 'camping') === 'camping').map(l => l.price);
+  const nonCampPrices = listings.filter(l => l.type === 'non_camping').map(l => l.price);
+  const overall       = statsForPrices(allPrices);
+  return {
+    ...overall,                                    // top-level stats = all listings (backward compat)
+    camping:    statsForPrices(campPrices),         // camping-specific breakdown
+    nonCamping: statsForPrices(nonCampPrices),      // non-camping breakdown
   };
 }
 
@@ -289,7 +324,7 @@ async function main() {
   // Build snapshot — write even when listings is empty so we have a complete record.
   // An empty snapshot tells us the market was dry at this hour, which is useful data.
   if (!listings.length) {
-    log('No adult camping listings found — market may be empty or page structure may have changed.');
+    log('No adult weekend listings found — market may be empty or page structure may have changed.');
   }
 
   const prevSnap   = snapsData.snapshots
@@ -309,9 +344,13 @@ async function main() {
   };
 
   if (newSnap.summary.count) {
-    log(`Summary: ${newSnap.summary.count} listings, min £${newSnap.summary.min}, avg £${newSnap.summary.avg}, max £${newSnap.summary.max}`);
+    const c = newSnap.summary.camping;
+    const n = newSnap.summary.nonCamping;
+    log(`Summary: ${newSnap.summary.count} total listings`);
+    if (c) log(`  Camping    (${c.count}): min £${c.min}, avg £${c.avg}, max £${c.max}`);
+    if (n) log(`  Non-camping(${n.count}): min £${n.min}, avg £${n.avg}, max £${n.max}`);
   } else {
-    log('Summary: 0 adult camping listings (market empty snapshot written)');
+    log('Summary: 0 adult weekend listings (market empty snapshot written)');
   }
   if (newSnap.inferredSold.length) {
     log(`Inferred ${newSnap.inferredSold.length} likely sold since last snapshot:`);

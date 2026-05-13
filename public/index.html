@@ -133,7 +133,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
   <div class="logo">IoW</div>
   <div class="header-text">
     <h1>Isle of Wight Festival — Ticket Price Tracker</h1>
-    <p>Adult Weekend Camping · Twickets Resale · Auto-updated via GitHub Actions</p>
+    <p>Adult Weekend Tickets (Camping &amp; Non-Camping) · Twickets Resale · Auto-updated via GitHub Actions</p>
   </div>
   <div class="header-right">
     <select class="year-select" id="yearSelect" onchange="setYear(this.value)"></select>
@@ -156,6 +156,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
   <!-- ═══════ MARKET NOW ═══════ -->
   <div id="tab-market" class="tab-panel active">
     <div id="snapshotInfo" class="info"></div>
+    <div id="marketTypeInfo" class="info amber" style="margin-top:-8px;margin-bottom:20px"></div>
 
     <div class="stats-grid" id="statsGrid"></div>
 
@@ -173,7 +174,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="sec-title">All Listings — Latest Snapshot</div>
     <div class="card">
       <table>
-        <thead><tr><th>Listed</th><th>All-in Est.</th><th>Qty</th><th>vs Ticketmaster</th><th>Tier</th><th>Bar</th></tr></thead>
+        <thead><tr><th>Type</th><th>Listed</th><th>All-in Est.</th><th>Qty</th><th>vs Ticketmaster</th><th>Tier</th><th>Bar</th></tr></thead>
         <tbody id="listingsBody"></tbody>
       </table>
     </div>
@@ -241,8 +242,11 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
     <div class="info" style="margin-top:20px">
       <strong>Inferred Sold (scraper):</strong> Each snapshot fingerprints listings as <code>price|qty|tier</code>.
-      When a fingerprint disappears between snapshots it's inferred as <em>likely sold</em>.
-      High confidence = unique fingerprint. Low confidence = shared fingerprint (ambiguous).
+      When a fingerprint disappears between snapshots it's logged as <em>likely sold</em> or <em>removed/relisted</em>.
+      <strong>Likely sold</strong> = all-in price ≤ Ticketmaster (£320) — a plausible sale price.
+      <strong>Removed?</strong> = all-in above Ticketmaster — seller likely withdrew or relisted cheaper.
+      High confidence = unique fingerprint. Low confidence = fingerprint appeared multiple times (ambiguous).
+      Both camping and non-camping disappearances are tracked here; the Tier column identifies the type.
     </div>
 
     <div class="stats-grid" id="soldStats"></div>
@@ -284,15 +288,26 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       Edit <code>data/events.json</code> and update the <code>announcements</code> array with confirmed dates
       and a brief description of who was announced. These appear as markers on the trend chart.</p><br>
 
-      <p><strong style="color:var(--blue)">Fingerprinting & sold inference</strong><br>
+      <p><strong style="color:var(--blue)">Camping vs non-camping tickets</strong><br>
+      The IoW Festival Twickets page lists two types of adult weekend ticket: <strong>Camping</strong>
+      (weekend access + campsite) and <strong>Non-Camping</strong> (weekend access only). Ticketmaster
+      prices them differently (~£368 vs ~£285 in 2026), but on resale they share the same listing page
+      and compete in the same pool — some buyers are indifferent. The scraper captures both and tags
+      each listing. Stats, signals, and the primary trend line use camping tickets only (directly
+      comparable to the Ticketmaster camping price). Non-camping is shown as a separate, lighter series
+      on the trends chart and flagged with a badge in all tables.</p><br>
+
+      <p><strong style="color:var(--blue)">Fingerprinting &amp; sold inference</strong><br>
       Listing IDs are not exposed by Twickets, so each listing is identified by <code>price|qty|tier</code>.
-      Unique fingerprints give high-confidence sold signals. Listings marked "Accepting Offers" that
-      disappear likely sold below asking.</p><br>
+      When a fingerprint disappears between snapshots it's logged as inferred sold.
+      Unique fingerprints give high-confidence signals. Listings marked "Accepting Offers" that
+      disappear likely sold below asking. Listings that disappear above Ticketmaster all-in price are
+      more likely removed/relisted than genuinely sold — the outcome column in the Sold log flags this.</p><br>
 
       <p><strong style="color:var(--blue)">Scrape frequency strategy</strong><br>
-      Hourly during UK waking hours (06:00–22:00 UTC) in peak season (Mar–Jun) — based on alert email
-      analysis confirming all Twickets listings appear 07:30–21:00 UK time with zero overnight activity.
-      Off-season: once daily. Trigger a manual run anytime from the GitHub Actions tab.</p>
+      Every 15 minutes during UK waking hours (07:00–23:00 BST) in peak season, triggered by
+      cron-job.org → GitHub <code>workflow_dispatch</code>. GitHub Actions hourly schedule acts as
+      fallback. Off-season: once daily. Trigger a manual run anytime from the GitHub Actions tab.</p>
     </div>
 
     <div class="sec-title">Snapshot History</div>
@@ -360,6 +375,19 @@ const daysBetween = (a, b) => Math.ceil((new Date(b) - new Date(a)) / 86400000);
 const TWICKETS_FEE = 0.159;
 const allIn = p => Math.round(+p * (1 + TWICKETS_FEE) * 100) / 100;
 
+// Ticket type classification — mirrors scraper/scrape.js classifyTier()
+// Applied on the fly so historical snapshots without a `type` field are handled correctly.
+const NON_CAMPING_KW = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
+const CAMPING_KW     = ['camping', 'camp'];
+function classifyTier(tier) {
+  const t = (tier || '').toLowerCase();
+  if (NON_CAMPING_KW.some(k => t.includes(k))) return 'non_camping';
+  if (CAMPING_KW.some(k => t.includes(k))) return 'camping';
+  return 'unknown';
+}
+// Use stored type if present (new snapshots), otherwise classify from tier name (historical)
+function listingType(l) { return l.type || classifyTier(l.tier); }
+
 function getYearSnaps() {
   return SNAPS.snapshots
     .filter(s => s.year === activeYear)
@@ -403,21 +431,23 @@ function computeSignal(snaps, eventConfig) {
   const tmPrice   = eventConfig?.baselines?.ticketmasterCurrent || 320;
   const today     = new Date().toISOString().split('T')[0];
   const daysTo    = daysBetween(today, eventConfig?.festival?.date || '2099-01-01');
-  // Use most recent snapshot that actually has listings for price signals
-  const activeSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
+  // Use most recent snapshot that actually has camping listings for price signals
+  // Signals are camping-only — that's the product being compared vs Ticketmaster camping price
+  const activeSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.filter(l => listingType(l) === 'camping').length > 0);
   const latest    = activeSnaps[activeSnaps.length - 1];
   if (!latest) return { buySignal: 'insufficient', sellSignal: 'insufficient', buyReason: 'No listing data yet — market may be empty.', sellReason: 'No listing data yet.' };
 
-  const stats     = computeStats(latest.listings, fv);
+  const campListings = latest.listings.filter(l => listingType(l) === 'camping');
+  const stats     = computeStats(campListings, fv);
   const avgAI     = allIn(stats.avg);   // all-in average
   const minAI     = allIn(stats.min);   // all-in minimum
   const avgVsTM   = ((avgAI - tmPrice) / tmPrice * 100).toFixed(1);
 
-  // Momentum: compare last two non-empty snapshots (using all-in)
+  // Momentum: compare last two non-empty snapshots (using all-in, camping only)
   let momentum    = 'flat';
   if (activeSnaps.length >= 2) {
     const prev    = activeSnaps[activeSnaps.length - 2];
-    const prevSt  = computeStats(prev.listings, fv);
+    const prevSt  = computeStats(prev.listings.filter(l => listingType(l) === 'camping'), fv);
     if (stats.avg < prevSt.avg - 5) momentum = 'falling';
     else if (stats.avg > prevSt.avg + 5) momentum = 'rising';
   }
@@ -431,7 +461,7 @@ function computeSignal(snaps, eventConfig) {
 
   // Buy signal — compare all-in resale vs Ticketmaster current price
   // Uses min all-in as the opportunity signal, not average (which is skewed by expensive listings)
-  const offerListings   = latest.listings.filter(l => l.offers);
+  const offerListings   = campListings.filter(l => l.offers);
   const cheapestOffer   = offerListings.length ? allIn(Math.min(...offerListings.map(l => +l.price))) : null;
   const savingVsTM      = tmPrice - minAI;
   const savingPct       = Math.round(savingVsTM / tmPrice * 100);
@@ -509,23 +539,37 @@ function renderMarket(snaps, latest, fv) {
     info.innerHTML = 'No snapshots yet. Run the scraper to start collecting data.';
     return;
   }
-  const st = computeStats(latest.listings, fv);
-  info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${st.count}</strong> adult camping listings · Prices shown are all-in estimates (listed price + ~15.9% Twickets buyer fee) · Source: ${latest.source}`;
+  const config       = getEventConfig();
+  const tmPrice      = config?.baselines?.ticketmasterCurrent || 320;
+  const campListings = latest.listings.filter(l => listingType(l) === 'camping');
+  const ncListings   = latest.listings.filter(l => listingType(l) === 'non_camping');
+  const stCamp       = computeStats(campListings, fv);
+  const belowTM      = campListings.filter(l => allIn(+l.price) < tmPrice).length;
 
-  // Stats
+  info.innerHTML = `Snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${campListings.length}</strong> camping + <strong>${ncListings.length}</strong> non-camping listings · All-in estimates (listed price + ~15.9% Twickets fee) · Source: ${latest.source}`;
+
+  // Camping/non-camping explainer
+  const ncFV = config?.faceValues?.adult_non_camping;
+  const ncFVNote = ncFV ? ` (Ticketmaster face value: £${ncFV.toFixed(2)})` : '';
+  const marketInfoEl = document.getElementById('marketTypeInfo');
+  if (marketInfoEl) {
+    marketInfoEl.innerHTML = `<strong>ℹ️ Two ticket types in this market:</strong>
+      <strong>Camping</strong> (weekend + campsite) · Ticketmaster face value £${(config?.faceValues?.adult_camping||368).toFixed(2)}.
+      <strong>Non-Camping</strong> (festival access only, no campsite)${ncFVNote}.
+      Ticketmaster prices them differently, but on resale they compete in the same pool — some buyers are happy with either.
+      <strong>Stats below are for camping tickets only</strong> (the primary market). Non-camping listings are shown in the table with a badge and as a separate series on the trends chart.`;
+  }
+
+  // Stats — camping only
   const grid = document.getElementById('statsGrid');
   grid.innerHTML = '';
-  const config    = getEventConfig();
-  const tmPrice   = config?.baselines?.ticketmasterCurrent || 320;
-  const belowTM   = latest.listings.filter(l => allIn(+l.price) < tmPrice).length;
   const cards = [
-    { v: fmt(allIn(st.min)),    l: 'Lowest All-in',             c: 'c-blue'   },
-    { v: fmt(allIn(st.avg)),    l: 'Avg All-in',                c: 'c-green'  },
-    { v: fmt(allIn(st.median)), l: 'Median All-in',             c: ''         },
-    { v: fmt(allIn(st.max)),    l: 'Highest All-in',            c: 'c-orange' },
-    { v: st.count,              l: 'Listings',                  c: 'c-purple' },
-    { v: belowTM,               l: `Cheaper than Ticketmaster`, c: 'c-green'  },
-    { v: fmt(tmPrice),          l: 'Ticketmaster Now',          c: 'c-blue'   },
+    { v: stCamp.min  != null ? fmt(allIn(stCamp.min))    : '—', l: 'Camping Floor (all-in)', c: 'c-blue'   },
+    { v: stCamp.avg  != null ? fmt(allIn(stCamp.avg))    : '—', l: 'Camping Avg (all-in)',   c: 'c-green'  },
+    { v: stCamp.count != null ? stCamp.count             : '—', l: 'Camping Listings',        c: 'c-purple' },
+    { v: ncListings.length,                                       l: 'Non-Camping Listings',   c: ''         },
+    { v: belowTM,                                                 l: 'Camping < Ticketmaster', c: 'c-green'  },
+    { v: fmt(tmPrice),                                            l: 'Ticketmaster Now',        c: 'c-blue'   },
   ];
   cards.forEach(c => {
     grid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
@@ -577,7 +621,12 @@ function renderMarket(snaps, latest, fv) {
     const tmText = Math.abs(diff) < 0.5 ? 'At Ticketmaster price' : (diff>0?'+':'')+fmt(Math.abs(diff))+(isBelow?' below TM':' above TM');
     const barW   = Math.round((allInPrice/500)*100);
     const barC   = isBelow ? '#3fb950' : isAbove ? '#a371f7' : '#58a6ff';
+    const lType  = listingType(l);
+    const typeBadge = lType === 'non_camping'
+      ? `<span class="badge b-yellow" title="Weekend access only — no campsite. Ticketmaster face value differs from camping.">Non-Camp</span>`
+      : `<span class="badge b-blue" title="Weekend + campsite access">Camping</span>`;
     tbody.innerHTML += `<tr>
+      <td>${typeBadge}</td>
       <td>${fmt(+l.price)}</td>
       <td><strong>${fmt(allInPrice)}</strong></td>
       <td>${l.qty}</td>
@@ -626,14 +675,19 @@ function renderTrends(snaps, config, fv) {
   const tmRef  = bl.ticketmasterCurrent || 320;
   const ebRef  = bl.ownerEarlyBird || 231.35;
   const grRef  = bl.gregsResale || 243.45;
-  // Use null (not undefined) for empty-market snapshots so Chart.js renders clean gaps
-  // All prices are all-in estimates (listed price + ~15.9% Twickets buyer fee)
-  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg != null ? allIn(st.avg) : null; });
-  const mins   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.min != null ? allIn(st.min) : null; });
-  const counts = snaps.map(s => s.listings.length);
+  // Split listings by type for each snapshot
+  const campSnap = s => s.listings.filter(l => listingType(l) === 'camping');
+  const ncSnap   = s => s.listings.filter(l => listingType(l) === 'non_camping');
+  // All-in averages and mins — camping (primary) and non-camping (secondary)
+  const campAvgs = snaps.map(s => { const cl = campSnap(s); const st = computeStats(cl, fv); return st.avg != null ? allIn(st.avg) : null; });
+  const campMins = snaps.map(s => { const cl = campSnap(s); const st = computeStats(cl, fv); return st.min != null ? allIn(st.min) : null; });
+  const ncAvgs   = snaps.map(s => { const nl = ncSnap(s);   const st = computeStats(nl, fv); return st.avg != null ? allIn(st.avg) : null; });
+  const ncMins   = snaps.map(s => { const nl = ncSnap(s);   const st = computeStats(nl, fv); return st.min != null ? allIn(st.min) : null; });
+  const campCounts = snaps.map(s => campSnap(s).length);
+  const ncCounts   = snaps.map(s => ncSnap(s).length);
   const pctBelow = snaps.map(s => {
-    const st = computeStats(s.listings, fv);
-    return st.count ? Math.round(s.listings.filter(l => allIn(+l.price) < tmRef).length / st.count * 100) : null;
+    const cl = campSnap(s);
+    return cl.length ? Math.round(cl.filter(l => allIn(+l.price) < tmRef).length / cl.length * 100) : null;
   });
 
   // Announcement vertical lines as annotations (manual via dataset)
@@ -652,8 +706,10 @@ function renderTrends(snaps, config, fv) {
   charts.trend = new Chart(document.getElementById('trendChart'), {
     type:'line',
     data:{ labels, datasets:[
-      { label:'Avg (all-in)',           data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
-      { label:'Min (all-in)',           data:mins, borderColor:'#3fb950', backgroundColor:'transparent', tension:.3, borderDash:[5,3], pointRadius:5, pointBackgroundColor:'#3fb950' },
+      { label:'Camping avg (all-in)',         data:campAvgs, borderColor:'#58a6ff',              backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
+      { label:'Camping floor (all-in)',        data:campMins, borderColor:'#3fb950',              backgroundColor:'transparent', tension:.3, borderDash:[5,3], pointRadius:5, pointBackgroundColor:'#3fb950' },
+      { label:'Non-camping avg (all-in)',      data:ncAvgs,   borderColor:'rgba(210,153,34,0.7)', backgroundColor:'transparent', tension:.3, borderDash:[3,4], pointRadius:4, pointBackgroundColor:'rgba(210,153,34,0.7)', borderWidth:1.5 },
+      { label:'Non-camping floor (all-in)',    data:ncMins,   borderColor:'rgba(210,153,34,0.4)', backgroundColor:'transparent', tension:.3, borderDash:[2,5], pointRadius:3, pointBackgroundColor:'rgba(210,153,34,0.4)', borderWidth:1 },
       { label:`Ticketmaster now (${fmt(tmRef)})`, data:snaps.map(()=>tmRef), borderColor:'rgba(255,107,53,0.8)', tension:0, fill:false, pointRadius:0, borderDash:[8,4], borderWidth:2 },
       { label:`Owner early bird (${fmt(ebRef)})`, data:snaps.map(()=>ebRef), borderColor:'rgba(63,185,80,0.6)',  tension:0, fill:false, pointRadius:0, borderDash:[4,4], borderWidth:1 },
       { label:`Greg's resale (${fmt(grRef)})`,    data:snaps.map(()=>grRef), borderColor:'rgba(163,113,247,0.6)',tension:0, fill:false, pointRadius:0, borderDash:[4,4], borderWidth:1 },
@@ -670,7 +726,10 @@ function renderTrends(snaps, config, fv) {
   destroyChart('supply');
   charts.supply = new Chart(document.getElementById('supplyChart'), {
     type:'line',
-    data:{ labels, datasets:[{ label:'# Listings', data:counts, borderColor:'#a371f7', backgroundColor:'#a371f722', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#a371f7' }]},
+    data:{ labels, datasets:[
+      { label:'Camping listings',     data:campCounts, borderColor:'#a371f7',              backgroundColor:'#a371f722', tension:.3, fill:true,  pointRadius:5, pointBackgroundColor:'#a371f7' },
+      { label:'Non-camping listings', data:ncCounts,   borderColor:'rgba(210,153,34,0.7)', backgroundColor:'transparent', tension:.3, fill:false, pointRadius:4, pointBackgroundColor:'rgba(210,153,34,0.7)', borderDash:[3,4], borderWidth:1.5 },
+    ]},
     options:{ ...CHART_DEFAULTS, scales:{ x:{ticks:{color:'#8b949e'},grid:{color:'#21262d'}}, y:{ticks:{color:'#8b949e',stepSize:2},grid:{color:'#21262d'},beginAtZero:false,min:0} } }
   });
 
@@ -734,9 +793,9 @@ function renderSignals(snaps, config, fv) {
   });
 
   // Signal chart — reuse trend data (skip if < 2 snapshots, single point looks broken)
-  const sigActiveSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
+  const sigActiveSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.filter(l=>listingType(l)==='camping').length > 0);
   const labels = snaps.map(s => s.date.slice(5));
-  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg ? allIn(st.avg) : null; });
+  const avgs   = snaps.map(s => { const cl = s.listings.filter(l=>listingType(l)==='camping'); const st = computeStats(cl, fv); return st.avg ? allIn(st.avg) : null; });
   destroyChart('signal');
   if (sigActiveSnaps.length < 2) {
     document.getElementById('signalChart').style.display = 'none';
@@ -920,19 +979,22 @@ function renderSold(snaps) {
 
 // ── SETUP / HISTORY ───────────────────────────────────────────────────────
 function renderSetup(snaps, fv) {
+  const tmPrice = getEventConfig()?.baselines?.ticketmasterCurrent || 320;
   const tbody = document.getElementById('historyBody');
   tbody.innerHTML = '';
   snaps.slice().reverse().forEach(s => {
-    const st = computeStats(s.listings, fv);
-    const pct = st.count ? Math.round(st.belowFV/st.count*100) : 0;
+    const cl  = s.listings.filter(l => listingType(l) === 'camping');
+    const ncl = s.listings.filter(l => listingType(l) === 'non_camping');
+    const st  = computeStats(cl, fv);
+    const pct = cl.length ? Math.round(cl.filter(l => allIn(+l.price) < tmPrice).length / cl.length * 100) : 0;
     tbody.innerHTML += `<tr>
       <td>${s.date}</td>
       <td>${s.year}</td>
       <td>${s.daysToFestival}d</td>
-      <td>${st.count}</td>
-      <td>${st.min ? fmt(allIn(st.min)) : '—'}</td>
-      <td>${st.avg ? fmt(allIn(st.avg)) : '—'}</td>
-      <td>${st.median ? fmt(allIn(st.median)) : '—'}</td>
+      <td>${cl.length} <span style="color:var(--text3);font-size:11px">+${ncl.length} nc</span></td>
+      <td>${st.min  != null ? fmt(allIn(st.min))    : '—'}</td>
+      <td>${st.avg  != null ? fmt(allIn(st.avg))    : '—'}</td>
+      <td>${st.median != null ? fmt(allIn(st.median)) : '—'}</td>
       <td><span class="badge b-green">${pct}%</span></td>
       <td style="color:var(--text3);font-size:12px">${s.source||'—'}</td>
     </tr>`;
