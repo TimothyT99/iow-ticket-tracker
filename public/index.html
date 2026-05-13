@@ -381,11 +381,16 @@ const allIn = p => Math.round(+p * (1 + TWICKETS_FEE) * 100) / 100;
 // Applied on the fly so historical snapshots without a `type` field are handled correctly.
 const NON_CAMPING_KW  = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
 const CAMPING_KW      = ['camping', 'camp'];
+const GENERAL_ADM_KW  = ['general admission', 'general admit'];
 function classifyTier(tier) {
   const t = (tier || '').toLowerCase();
   if (NON_CAMPING_KW.some(k => t.includes(k))) return 'non_camping';
   if (CAMPING_KW.some(k => t.includes(k))) return 'camping';
-  return 'unknown'; // plain 'General Admission' and other ambiguous tiers excluded
+  // Plain 'General Admission' — genuine festival ticket with no camping qualifier.
+  // Ferry/coach/add-on listings are filtered out by the scraper's EXCLUDE_KEYWORDS
+  // before they ever get stored, so anything reaching here is a real ticket.
+  if (GENERAL_ADM_KW.some(k => t.includes(k))) return 'non_camping';
+  return 'unknown';
 }
 // Use stored type if present (new snapshots), otherwise classify from tier name (historical)
 function listingType(l) { return l.type || classifyTier(l.tier); }
