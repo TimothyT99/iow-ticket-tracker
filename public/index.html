@@ -430,18 +430,34 @@ function computeSignal(snaps, eventConfig) {
   });
 
   // Buy signal — compare all-in resale vs Ticketmaster current price
+  // Uses min all-in as the opportunity signal, not average (which is skewed by expensive listings)
+  const offerListings   = latest.listings.filter(l => l.offers);
+  const cheapestOffer   = offerListings.length ? allIn(Math.min(...offerListings.map(l => +l.price))) : null;
+  const savingVsTM      = tmPrice - minAI;
+  const savingPct       = Math.round(savingVsTM / tmPrice * 100);
+  const offerSavingVsTM = cheapestOffer ? Math.round((tmPrice - cheapestOffer) / tmPrice * 100) : null;
+
   let buySignal, buyReason;
   if (daysTo < 7) {
     buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance, prices rising.`;
   } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
     buySignal = 'wait'; buyReason = `${nearAnn.label} announcement in ${daysBetween(today, nearAnn.date)} days — prices likely to spike. Consider waiting until 2 weeks after.`;
-  } else if (momentum === 'falling' && daysTo >= 14 && avgAI < tmPrice) {
-    buySignal = 'buy'; buyReason = `All-in avg is falling (now ${fmt(avgAI)}, ${Math.abs(avgVsTM)}% below Ticketmaster at ${fmt(tmPrice)}). Good buying window with ${daysTo} days left.`;
-  } else if (daysTo >= 14 && daysTo <= 56 && avgAI < tmPrice) {
-    buySignal = 'watch'; buyReason = `In the typical discount window (${daysTo} days out). All-in avg ${fmt(avgAI)} is below Ticketmaster (${fmt(tmPrice)}) — monitor for further drops.`;
+  } else if (minAI < tmPrice * 0.85 && momentum !== 'rising') {
+    // Floor is meaningfully below TM — flag opportunity, especially if offers available
+    const offerNote = cheapestOffer && cheapestOffer < tmPrice
+      ? ` Cheapest offer listing all-in ~${fmt(cheapestOffer)} (${offerSavingPct(cheapestOffer, tmPrice)}% below TM) — a negotiated offer may do better.`
+      : '';
+    buySignal = 'buy'; buyReason = `Cheapest all-in is ${fmt(minAI)} — ${savingPct}% below Ticketmaster (${fmt(tmPrice)}) with ${daysTo} days to go.${offerNote}`;
+  } else if (minAI < tmPrice && daysTo >= 14) {
+    const offerNote = cheapestOffer && cheapestOffer < tmPrice
+      ? ` ${offerListings.length} listings accepting offers — a negotiated bid around ${fmt(Math.min(...offerListings.map(l=>+l.price)))} listed could secure a deal.`
+      : '';
+    buySignal = 'watch'; buyReason = `Floor is ${fmt(minAI)} all-in vs Ticketmaster ${fmt(tmPrice)} (${savingPct}% saving). Avg is higher but deals exist at the bottom.${offerNote}`;
   } else {
-    buySignal = 'wait'; buyReason = `All-in avg ${fmt(avgAI)} vs Ticketmaster ${fmt(tmPrice)}. ${avgAI >= tmPrice ? 'Resale currently at or above Ticketmaster — no advantage yet.' : 'Some deals available but avg isn\'t compelling.'}`;
+    buySignal = 'wait'; buyReason = `All-in avg ${fmt(avgAI)} vs Ticketmaster ${fmt(tmPrice)}. ${avgAI >= tmPrice ? 'Resale currently at or above Ticketmaster — no advantage yet.' : 'Some deals available but limited saving vs Ticketmaster.'}`;
   }
+
+  function offerSavingPct(p, ref) { return Math.round((ref - p) / ref * 100) + '%'; }
 
   // Sell signal
   let sellSignal, sellReason;
@@ -718,10 +734,11 @@ function renderSignals(snaps, config, fv) {
   });
 
   // Signal chart — reuse trend data (skip if < 2 snapshots, single point looks broken)
+  const sigActiveSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
   const labels = snaps.map(s => s.date.slice(5));
-  const avgs   = snaps.map(s => computeStats(s.listings, fv).avg);
+  const avgs   = snaps.map(s => { const st = computeStats(s.listings, fv); return st.avg ? allIn(st.avg) : null; });
   destroyChart('signal');
-  if (nonEmptySnaps.length < 2) {
+  if (sigActiveSnaps.length < 2) {
     document.getElementById('signalChart').style.display = 'none';
   } else {
     document.getElementById('signalChart').style.display = '';
@@ -729,8 +746,8 @@ function renderSignals(snaps, config, fv) {
   charts.signal = new Chart(document.getElementById('signalChart'), {
     type:'line',
     data:{ labels, datasets:[
-      { label:'Avg Ask', data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
-      { label:`Face Value`,  data:snaps.map(()=>fv), borderColor:'rgba(255,107,53,0.5)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
+      { label:'Avg (all-in)', data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
+      { label:`Ticketmaster now (${fmt(sig.tmPrice)})`, data:snaps.map(()=>sig.tmPrice), borderColor:'rgba(255,107,53,0.7)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
     ]},
     options:{ ...CHART_DEFAULTS,
       plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw||0).toFixed(2)}` } } },
