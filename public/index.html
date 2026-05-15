@@ -72,6 +72,7 @@ a { color: var(--blue); }
 
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
 .card-p { padding: 20px; }
+@media(max-width:680px) { .card { overflow-x: auto; } }
 .card h3 { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 14px; }
 .card canvas { max-height: 240px; }
 
@@ -102,14 +103,18 @@ a { color: var(--blue); }
 
 /* ── TABLE ── */
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th { background: var(--bg3); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+thead th { background: var(--bg3); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 tbody tr { border-bottom: 1px solid var(--border2); transition: background .1s; }
 tbody tr:last-child { border: none; }
 tbody tr:hover { background: rgba(255,255,255,.02); }
 tbody td { padding: 10px 14px; vertical-align: middle; }
+@media(max-width:680px) {
+  thead th, tbody td { padding: 8px 8px; font-size: 12px; }
+  .hide-mob { display: none; }
+}
 
 /* ── BADGES ── */
-.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .b-green  { background: rgba(63,185,80,.15);  color: var(--green);  border: 1px solid rgba(63,185,80,.3);  }
 .b-blue   { background: rgba(88,166,255,.15); color: var(--blue);   border: 1px solid rgba(88,166,255,.3); }
 .b-orange { background: rgba(255,107,53,.15); color: #ff9966;       border: 1px solid rgba(255,107,53,.3); }
@@ -174,7 +179,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="sec-title">All Listings — Latest Snapshot</div>
     <div class="card">
       <table>
-        <thead><tr><th>Type</th><th>Listed</th><th>All-in Est.</th><th>Qty</th><th>vs Ticketmaster</th><th>Tier</th><th>Bar</th></tr></thead>
+        <thead><tr><th>Type</th><th>Listed</th><th>All-in Est.</th><th>Qty</th><th>vs Ticketmaster</th><th class="hide-mob">Tier</th><th class="hide-mob">Bar</th></tr></thead>
         <tbody id="listingsBody"></tbody>
       </table>
     </div>
@@ -592,7 +597,7 @@ function renderMarket(snaps, latest, fv) {
     {l:'>£368',   lo:368.01,hi:9999 },
   ];
   const bColors = ['#3fb950','#6ee7b7','#58a6ff','#79c0ff','#ff6b35','#a371f7'];
-  const bCounts = bands.map(b => campListings.filter(l=>+l.price>=b.lo&&+l.price<b.hi).length);
+  const bCounts = bands.map(b => campListings.filter(l=>allIn(+l.price)>=b.lo&&allIn(+l.price)<b.hi).length);
   charts.dist = new Chart(document.getElementById('distChart'), {
     type:'bar', data:{ labels:bands.map(b=>b.l), datasets:[{
       data:bCounts, backgroundColor:bColors.map(c=>c+'bb'), borderColor:bColors, borderWidth:1, borderRadius:4
@@ -637,8 +642,8 @@ function renderMarket(snaps, latest, fv) {
       <td><strong>${fmt(allInPrice)}</strong></td>
       <td>${l.qty}</td>
       <td><span class="badge ${bc}">${tmText}</span>${l.offers?' <span class="badge b-grey">Offers</span>':''}</td>
-      <td style="color:var(--text3);font-size:12px">${l.tier}</td>
-      <td><span class="bar-spark" style="width:${barW}px;background:${barC}"></span></td>
+      <td class="hide-mob" style="color:var(--text3);font-size:12px">${l.tier}</td>
+      <td class="hide-mob"><span class="bar-spark" style="width:${barW}px;background:${barC}"></span></td>
     </tr>`;
   });
 }
