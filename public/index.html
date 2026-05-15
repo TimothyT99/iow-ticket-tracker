@@ -167,7 +167,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
     <div class="row2">
       <div class="card card-p">
-        <h3>Price Distribution</h3>
+        <h3>Price Distribution (all-in est.)</h3>
         <canvas id="distChart"></canvas>
       </div>
       <div class="card card-p">
@@ -586,15 +586,18 @@ function renderMarket(snaps, latest, fv) {
     grid.innerHTML += `<div class="stat ${c.c}"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`;
   });
 
-  // Distribution chart
+  // Distribution chart — buckets based on all-in estimates (listed price + ~15.9% fee)
+  // Thresholds are dynamic: tmPrice and allIn(fv) anchor the key reference points
   destroyChart('dist');
+  const fvAllin  = Math.round(allIn(fv));       // e.g. £427 when fv=£368
+  const tmLo     = Math.min(tmPrice, 320);       // lower TM boundary (never above 320)
   const bands = [
-    {l:'<£270', lo:0,      hi:270   },
-    {l:'£270–300',lo:270,  hi:300   },
-    {l:'£300–330',lo:300,  hi:330   },
-    {l:'£330–368',lo:330,  hi:368   },
-    {l:'£368 FV', lo:368,  hi:368.01},
-    {l:'>£368',   lo:368.01,hi:9999 },
+    {l:'<£270',                   lo:0,         hi:270        },
+    {l:`£270–£${tmLo}`,           lo:270,       hi:tmLo       },
+    {l:`£${tmLo}–£370`,           lo:tmLo,      hi:370        },
+    {l:`£370–£${fvAllin-5}`,      lo:370,       hi:fvAllin-5  },
+    {l:`~FV (£${fvAllin})`,       lo:fvAllin-5, hi:fvAllin+15 },
+    {l:'>FV',                     lo:fvAllin+15,hi:9999       },
   ];
   const bColors = ['#3fb950','#6ee7b7','#58a6ff','#79c0ff','#ff6b35','#a371f7'];
   const bCounts = bands.map(b => campListings.filter(l=>allIn(+l.price)>=b.lo&&allIn(+l.price)<b.hi).length);
