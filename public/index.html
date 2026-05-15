@@ -167,7 +167,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
     <div class="row2">
       <div class="card card-p">
-        <h3>Price Distribution (all-in est.)</h3>
+        <h3>Price Distribution — All Listings (all-in est.)</h3>
         <canvas id="distChart"></canvas>
       </div>
       <div class="card card-p">
@@ -600,7 +600,10 @@ function renderMarket(snaps, latest, fv) {
     {l:'>FV',                     lo:fvAllin+15,hi:9999       },
   ];
   const bColors = ['#3fb950','#6ee7b7','#58a6ff','#79c0ff','#ff6b35','#a371f7'];
-  const bCounts = bands.map(b => campListings.filter(l=>allIn(+l.price)>=b.lo&&allIn(+l.price)<b.hi).length);
+  // Distribution uses all classified listings (camping + non-camping) for a full market picture.
+  // Stats cards and signals remain camping-only for consistency with the primary series.
+  const allClassified = latest.listings.filter(l => listingType(l) !== 'unknown');
+  const bCounts = bands.map(b => allClassified.filter(l=>allIn(+l.price)>=b.lo&&allIn(+l.price)<b.hi).length);
   charts.dist = new Chart(document.getElementById('distChart'), {
     type:'bar', data:{ labels:bands.map(b=>b.l), datasets:[{
       data:bCounts, backgroundColor:bColors.map(c=>c+'bb'), borderColor:bColors, borderWidth:1, borderRadius:4
