@@ -7,19 +7,23 @@ and serves a live dashboard via Netlify.
 **What it does:**
 - 📊 Tracks all-in prices over time (listed price + ~15.9% Twickets buyer fee)
 - ⛺ Captures both camping and non-camping weekend tickets — tagged separately in data and charts
-- 💸 Infers likely sold prices from listing disappearances, with outcome classification
+- 💸 Infers likely sold prices from listing disappearances, classified as "likely sold" or "removed/relisted"
 - 🎯 Generates buy/sell timing signals vs Ticketmaster current price (camping only)
-- 📣 Marks lineup announcement dates on charts
+- 🏷️ Marks key milestones on charts: lineup announcements, sell-out, Ticketmaster transfer window
+- 📣 Shows a sold-out banner site-wide when primary sales close
+- 📱 Mobile-responsive dashboard
 - 🗂 Multi-year — works for 2026, 2027, and beyond
+
+> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster primary sales are closed — Twickets is now the only route to tickets.
 
 ---
 
 ## Ticket types tracked
 
 Ticketmaster sells **Camping** and **Non-Camping** weekend tickets at the **same face value**
-(£368 standard / ~£320 current in 2026). The split is a capacity planning mechanism — Ticketmaster
-asks which you intend so they can manage campsite numbers, not a difference in festival access.
-Both give full access Thursday–Sunday.
+(£368 standard in 2026). The split is a capacity planning mechanism — Ticketmaster asks which
+you intend so they can manage campsite numbers, not a difference in festival access. Both give
+full access Thursday–Sunday.
 
 > *"Please let us know if you're planning to camp on-site by choosing the relevant ticket option.
 > Whatever you choose, you'll still have access to the site from Thursday to enjoy the full weekend
@@ -33,6 +37,21 @@ Both types are tracked and tagged. **Stats, signals, and primary trend lines use
 (more supply). Non-camping is shown as a lighter secondary series on the trends chart and badged
 in all tables — so any price divergence is measurable over time.
 
+**Tier classification** (`classifyTier()` in `scraper/scrape.js`, mirrored in the dashboard):
+
+| Priority | Keyword match | Result |
+|---|---|---|
+| 1 | `glamping`, `ferry`, `car park`, `child`, `coach`, `bus`, `lanyard`, etc. | Excluded |
+| 2 | `non-camping`, `no camping`, `non camp`, etc. | `non_camping` |
+| 3 | `camping`, `camp` | `camping` |
+| 4 | `general admission`, `general admit` | `non_camping` (confirmed real festival tickets) |
+| 5 | Anything else | Excluded |
+
+Non-camping keywords are checked before camping keywords to avoid false positives on tiers
+like "Weekend Adult Non-Camping" that contain "camping" as a substring. Plain "General Admission"
+tiers are confirmed genuine festival tickets on Twickets (verified by direct listing inspection);
+ferry/coach add-ons are caught by priority 1 before reaching this check.
+
 ---
 
 ## Pricing model
@@ -41,20 +60,43 @@ All prices shown on the dashboard are **all-in estimates** — the listed asking
 Twickets buyer fee (~15.9% on the transaction price, added at checkout). This makes resale prices
 directly comparable to face value purchases where fees are typically bundled.
 
+The 15.9% model is accurate to within ~£2 on typical listings. The actual Twickets rate varies
+slightly (15–15.93% depending on transaction value) but the overestimate is acceptable for
+comparison purposes.
+
 Reference baselines (stored in `data/events.json` → `baselines`):
 
 | Baseline | Price | Notes |
 |---|---|---|
-| Ticketmaster now | £320 | Standard adult camping, on sale May 2026 |
+| Ticketmaster face value | £368 | Standard adult camping — primary sales now closed (sold out 15 May 2026) |
+| Ticketmaster last price | £320 | Price at sell-out — no longer purchasable via primary sales |
 | Owner early bird | £231.35 | Sky early bird, purchased Jun 2025, fees bundled |
-| Greg's resale | £243.45 | Twickets resale Apr 2026, offer £210 + fee £33.45 |
+| Resale purchase | £243.45 | Twickets Apr 2026: listed £223, offer £210 accepted + £33.45 fee |
+
+---
+
+## Key events / announcements
+
+Events are stored in `data/events.json` → `announcements[]` and drive:
+- Vertical marker lines on all three trend charts (colour-coded by type)
+- A global sold-out banner across all dashboard tabs
+- Banner on the Price Trends tab for upcoming lineup announcements
+
+| Type | Colour | Effect |
+|---|---|---|
+| `lineup_1`, `lineup_2` | Amber | Trend chart marker + banner when within 30 days |
+| `sold_out` | Red | Trend chart marker + global sold-out banner across all tabs |
+| `ticket_transfer` | Blue | Trend chart marker only (Ticketmaster opens e-ticket transfers) |
+
+The buy/sell signal logic only reacts to `lineup_1`/`lineup_2` announcements — `sold_out` and
+`ticket_transfer` events are intentionally excluded from signal proximity calculations.
 
 ---
 
 ## Scrape schedule
 
 Twickets IoW listings are active between **07:30–21:00 UK time** with zero overnight activity.
-At peak season, listings sell within minutes of posting.
+At peak season (post sell-out), listings sell within minutes of posting.
 
 | Period | Primary trigger | Fallback | Runs/day |
 |---|---|---|---|
@@ -68,9 +110,11 @@ roughly hourly. cron-job.org triggers the workflow via `workflow_dispatch` on a 
 **Why keep the repo public?** At 15-min frequency (~2 min/run × 64 runs/day), a private repo
 would exhaust the free 2,000 min/month budget in ~15 days. Public repos have unlimited minutes.
 
-The scraper deduplicates within a 12-minute window to prevent double-runs. On transient
-Twickets failures it retries up to 3 times (15s, 30s waits). On failure, a screenshot is
-uploaded as a GitHub Actions artifact for debugging.
+The scraper deduplicates within a 12-minute window to prevent double-runs. On concurrent runs
+(cron-job.org and the hourly GitHub Actions fallback both fire at :00), the commit step uses
+`git push || (git pull --rebase origin main && git push)` to retry cleanly.
+On transient Twickets failures the scraper retries up to 3 times (15s, 30s waits).
+On failure, a screenshot is uploaded as a GitHub Actions artifact for debugging.
 
 ---
 
@@ -159,6 +203,61 @@ Go to GitHub → Actions → the failed run → scroll to **Artifacts** → down
 1. GitHub → Settings → Developer settings → Personal access tokens → regenerate `iow-cron-trigger`
 2. cron-job.org → edit the job → update the `Authorization` header with the new token
 
+### Record a sell-out or key milestone
+
+Edit `data/events.json` (and `public/data/events.json`) to add/update the event:
+
+```json
+"soldOut": true,
+"soldOutDate": "2026-05-15",
+"announcements": [
+  {
+    "date": "2026-05-15",
+    "type": "sold_out",
+    "label": "Sold Out",
+    "description": "IoW Festival 2026 officially sold out — Twickets is now the only route to tickets",
+    "confirmed": true
+  },
+  {
+    "date": "2026-06-01",
+    "type": "ticket_transfer",
+    "label": "TM Transfers",
+    "description": "Ticketmaster opens e-ticket transfers — update date when confirmed",
+    "confirmed": false
+  }
+]
+```
+
+Commit and push — the sold-out banner appears immediately, chart markers update on next page load.
+
+### Confirm the Ticketmaster transfer date
+
+When Ticketmaster announces the transfer window, update the `ticket_transfer` entry in both
+`data/events.json` and `public/data/events.json`:
+
+```json
+{ "date": "2026-06-03", "type": "ticket_transfer", "label": "TM Transfers",
+  "description": "Ticketmaster e-ticket transfers now open", "confirmed": true }
+```
+
+Commit and push.
+
+### Update lineup announcement dates
+
+Edit `data/events.json` (and `public/data/events.json`) when dates are confirmed:
+
+```json
+{ "date": "2026-09-24", "type": "lineup_1", "label": "Lineup 1",
+  "description": "Headliner announced", "confirmed": true }
+```
+
+Commit and push — the chart marker and announcement banner update automatically.
+
+### Update Ticketmaster current price
+
+If Ticketmaster changes the price (or primary sales close), update `baselines.ticketmasterCurrent`
+in both `data/events.json` and `public/data/events.json`, then commit and push.
+
 ### Add IoW 2027
 
 When 2027 tickets go on sale on Twickets:
@@ -183,24 +282,6 @@ When 2027 tickets go on sale on Twickets:
 4. Copy to `public/data/events.json`
 5. Commit and push — the scraper picks up the new year automatically
 
-### Update announcement dates
-
-Edit `data/events.json` (and `public/data/events.json`) when dates are confirmed:
-
-```json
-"announcements": [
-  { "date": "2026-09-24", "type": "lineup_1", "label": "Lineup 1",
-    "description": "Headliner announced", "confirmed": true }
-]
-```
-
-Commit and push — the chart markers update automatically.
-
-### Update Ticketmaster current price
-
-If Ticketmaster changes the price, update `baselines.ticketmasterCurrent` in both
-`data/events.json` and `public/data/events.json`, then commit and push.
-
 ---
 
 ## Project structure
@@ -209,14 +290,14 @@ If Ticketmaster changes the price, update `baselines.ticketmasterCurrent` in bot
 iow-ticket-tracker/
 ├── .github/workflows/scrape.yml   ← GitHub Actions (fallback hourly + daily; primary trigger is cron-job.org)
 ├── scraper/
-│   ├── scrape.js                  ← Playwright scraper (retries 3×, screenshots on failure)
+│   ├── scrape.js                  ← Playwright scraper (retries 3×, concurrent-push safe, screenshots on failure)
 │   ├── package.json
 │   └── package-lock.json          ← Required for Actions npm + Playwright cache
 ├── data/                          ← Source of truth (committed by scraper bot)
 │   ├── snapshots.json             ← All price snapshots
 │   └── events.json                ← Festival config, baselines, announcements & historical purchases
 ├── public/                        ← What Netlify serves
-│   ├── index.html                 ← Dashboard
+│   ├── index.html                 ← Dashboard (single-file, no build step)
 │   └── data/                      ← Mirror of data/ (keep in sync)
 │       ├── snapshots.json
 │       └── events.json
@@ -229,6 +310,20 @@ iow-ticket-tracker/
 
 ---
 
+## Versioning
+
+Code changes are tagged (`v1.001`, `v1.002`, …). The automated bot commits (`data: snapshot …`)
+are not tagged — only intentional code releases are. The current code version tag is referenced
+in each bot commit message for traceability.
+
+To tag a release after a code commit:
+```bash
+git tag v1.004
+git push --tags
+```
+
+---
+
 ## How the scraper works
 
 1. Launches a headless Chromium browser (via Playwright — cached between runs, ~2 min total)
@@ -236,22 +331,13 @@ iow-ticket-tracker/
 3. Dismisses the cookie banner
 4. Clicks "Load more" until all listings are visible
 5. Extracts: price, quantity, tier name, "accepting offers" flag
-6. Classifies each listing as `camping` or `non_camping` by tier name keyword matching
-   - Excluded entirely: glamping, car parks, child tickets, ferry/coach add-ons, programmes, lanyards
-   - Non-camping keywords checked first (e.g. "non-camping", "no camping") to avoid false positives on tiers like "Weekend Adult Non-Camping" that contain "camping" as a substring
-7. Computes summary stats for all listings + separate breakdowns by type
-8. Infers likely sold listings vs previous snapshot
+6. Classifies each listing as `camping` or `non_camping` by keyword matching (see Tier classification above); excludes glamping, ferry, car park, child tickets, and other add-ons
+7. Computes summary stats for all listings + separate breakdowns by camping / non-camping type
+8. Infers likely sold listings vs previous snapshot — fingerprinted as `price|qty|tier`; classified as "likely sold" (all-in ≤ TM price) or "removed/relisted" (all-in > TM price)
 9. Appends new snapshot to `data/snapshots.json` and `public/data/snapshots.json`, then commits
 
-**Ticket type classification:** `classifyTier(tier)` in `scraper/scrape.js` returns `camping`,
-`non_camping`, or `null` (exclude). The same logic is mirrored in the dashboard JS so historical
-snapshots without a stored `type` field are classified on the fly.
-
-**Sold price inference:** Listing IDs are not exposed by Twickets. Each listing is fingerprinted
-as `price|qty|tier`. When a fingerprint disappears between snapshots, it's logged as either
-`likely sold` (all-in price ≤ Ticketmaster current price — a plausible sale) or
-`likely removed/relisted` (all-in > Ticketmaster — seller probably withdrew or relisted cheaper).
-Confidence is `high` if the fingerprint was unique, `low` if duplicates existed.
+**Historical compat:** Older snapshots without a `type` field on each listing are classified
+on the fly in the dashboard using the same keyword logic, so all historical data displays correctly.
 
 **Empty market:** If Twickets shows 0 classifiable listings, a snapshot is still written with
 `marketEmpty: true`. This records dry-market periods and Chart.js renders them as clean gaps.
@@ -276,17 +362,20 @@ schedule:
 
 ## Tips for buy/sell timing
 
-Based on typical UK festival resale patterns (all prices are all-in):
+Based on typical UK festival resale patterns (all prices are all-in). **IoW 2026 is sold out —
+Ticketmaster primary sales are closed. All windows below now refer to Twickets resale only.**
 
 | Window | Buy signal | Sell signal |
 |---|---|---|
-| Tickets just on sale | Prices high, wait | Good early sell if you have spares |
+| Primary sales open | Buy early bird if available | — |
 | After Lineup 1 (Sep/Oct) | Wait — spike | **Best sell window** |
 | Dec–Jan quiet period | **Watch for deals** | Hold |
 | After Lineup 2 (Jan/Feb) | Wait — spike | Good sell window |
-| 6–8 weeks out | **Best buy window** | Hold |
+| After sell-out | Prices may spike — act fast on cheap listings | **Good sell window if you have spares** |
+| TM transfers open (~3–4 weeks out) | Watch for new supply | Sellers with transfers in hand may list urgently |
+| 6–8 weeks out | **Best buy window** (historically) | Hold |
 | 2–3 weeks out | Still ok | Last chance sell |
-| Final week | Last resort (prices peak) | **Sell now, urgently** |
+| Final week | Last resort — prices peak | **Sell now, urgently** |
 
 The dashboard's **Buy/Sell Signals** tab computes this automatically, comparing all-in resale
-prices against the Ticketmaster current price.
+prices against the Ticketmaster reference price.
