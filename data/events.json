@@ -89,6 +89,8 @@
         "glamping_2person": 1558.25
       },
       "primaryTier": "adult_camping",
+      "soldOut": true,
+      "soldOutDate": "2026-05-15",
       "announcements": [
         {
           "date": "2025-10-01",
@@ -103,6 +105,20 @@
           "label": "Lineup 2",
           "description": "Second headline announcement (approx — update with actual date)",
           "confirmed": false
+        },
+        {
+          "date": "2026-05-15",
+          "type": "sold_out",
+          "label": "Sold Out",
+          "description": "IoW Festival 2026 officially sold out — Twickets is now the only route to tickets",
+          "confirmed": true
+        },
+        {
+          "date": "2026-06-01",
+          "type": "ticket_transfer",
+          "label": "TM Transfers",
+          "description": "Ticketmaster expected to open ticket transfers (approx — update when confirmed). Sellers can transfer e-tickets to buyers, reducing uncertainty and likely driving listing activity",
+          "confirmed": false
         }
       ],
       "baselines": {
@@ -110,7 +126,7 @@
         "ownerEarlyBird": 231.35,
         "gregsResale": 243.45
       },
-      "notes": "IoW Festival 2026. Sky presents. Early bird 'Sky' price was £231.35 (owner's purchase Jun 2025). Standard face value £368. Ticketmaster current price £320 (May 2026). Greg's resale all-in £243.45 (Apr 2026)."
+      "notes": "IoW Festival 2026. Sky presents. Early bird 'Sky' price was £231.35 (owner's purchase Jun 2025). Standard face value £368. Ticketmaster current price £320 (May 2026). Greg's resale all-in £243.45 (Apr 2026). Festival officially sold out 15 May 2026 — Twickets only route to tickets."
     },
     "2027": {
       "festival": {
