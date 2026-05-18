@@ -468,9 +468,10 @@ function computeSignal(snaps, eventConfig) {
     else if (stats.avg > prevSt.avg + 5) momentum = 'rising';
   }
 
-  // Announcement proximity
+  // Announcement proximity — lineup announcements only (not sold_out / ticket_transfer)
   const anns      = eventConfig?.announcements || [];
   const nearAnn   = anns.find(a => {
+    if (a.type === 'sold_out' || a.type === 'ticket_transfer') return false;
     const d = daysBetween(today, a.date);
     return d >= -7 && d <= 14; // within a week past or 2 weeks before
   });
@@ -701,15 +702,15 @@ function renderTrends(snaps, config, fv) {
 
   // Check for sold-out or upcoming announcement banner on trends tab
   const today    = new Date().toISOString().split('T')[0];
+  // announcementBanner is for lineup announcements only — sold-out is covered by the
+  // global soldOutBanner above the tabs, so we don't repeat it here.
   const annBanner = document.getElementById('announcementBanner');
-  const soldOutAnn = anns.find(a => a.type === 'sold_out');
-  const upcoming   = !soldOutAnn && anns.find(a => a.type !== 'sold_out' && daysBetween(today, a.date) >= -14 && daysBetween(today, a.date) <= 30);
-  if (soldOutAnn) {
-    annBanner.className = 'info'; // red-tinted
-    annBanner.style.cssText = 'background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);border-radius:10px;padding:14px 18px;font-size:13px;color:#f85149;margin-bottom:16px;line-height:1.6;';
-    annBanner.style.display = '';
-    annBanner.innerHTML = `🎟️ <strong>Sold out (${soldOutAnn.date}):</strong> ${soldOutAnn.description}. Twickets is now the only route — prices typically rise after sell-out.`;
-  } else if (upcoming) {
+  const upcoming  = anns.find(a => {
+    if (a.type === 'sold_out' || a.type === 'ticket_transfer') return false;
+    const d = daysBetween(today, a.date);
+    return d >= -14 && d <= 30;
+  });
+  if (upcoming) {
     const d = daysBetween(today, upcoming.date);
     annBanner.className = 'info amber';
     annBanner.style.cssText = '';
