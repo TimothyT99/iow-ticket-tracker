@@ -14,9 +14,10 @@ const fs   = require('fs');
 const path = require('path');
 
 const ROOT        = path.join(__dirname, '..');
-const EVENTS_FILE = path.join(ROOT, 'data', 'events.json');
+// events.json lives only in public/data/ — single source of truth served by Netlify
+const EVENTS_FILE = path.join(ROOT, 'public', 'data', 'events.json');
 const SNAPS_FILE  = path.join(ROOT, 'data', 'snapshots.json');
-// public/data/ mirrors data/ so Netlify serves the latest snapshots
+// public/data/snapshots.json mirrors data/snapshots.json so Netlify serves the latest
 const PUBLIC_SNAPS_FILE = path.join(ROOT, 'public', 'data', 'snapshots.json');
 
 const isDryRun = process.argv.includes('--dry-run');
@@ -306,7 +307,7 @@ async function main() {
   const eventConfig  = events.years[year];
 
   if (!eventConfig) {
-    throw new Error(`No config found for year ${year}. Add it to data/events.json.`);
+    throw new Error(`No config found for year ${year}. Add it to public/data/events.json.`);
   }
 
   const today       = isoDate();
