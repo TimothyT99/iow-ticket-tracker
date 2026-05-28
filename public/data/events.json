@@ -1,6 +1,6 @@
 {
   "historicalBaselines": {
-    "notes": "Face values and purchase dates confirmed from owner's Ticketmaster order emails. All early bird purchases made ~June of the prior year (12 months out). Ticketmaster fee model changed: 2023\u20132024 had explicit per-ticket service charges; 2025\u20132026 fees appear bundled into face value (no separate charge shown). For like-for-like comparison, use orderTotal / ticket qty as the all-in per-ticket cost.",
+    "notes": "Face values and purchase dates confirmed from owner's Ticketmaster order emails. All early bird purchases made ~June of the prior year (12 months out). Ticketmaster fee model changed: 2023–2024 had explicit per-ticket service charges; 2025–2026 fees appear bundled into face value (no separate charge shown). For like-for-like comparison, use orderTotal / ticket qty as the all-in per-ticket cost.",
     "years": {
       "2023": {
         "purchaseDate": "2022-11-04",
@@ -20,7 +20,7 @@
         },
         "orderTotal": 487.5,
         "allInPerAdult": 245.0,
-        "notes": "2 adult + 1 child. Bought Nov 2022 (~7 months out). Service charges explicit on top. All-in per adult = (\u00a3215 face + \u00a315 service) = \u00a3230, but order total includes child + programme, so blended. Per-adult all-in = (487.50 - 8.25 - 16.00) / 2 = \u00a3231.63 approx."
+        "notes": "2 adult + 1 child. Bought Nov 2022 (~7 months out). Service charges explicit on top. All-in per adult = (£215 face + £15 service) = £230, but order total includes child + programme, so blended. Per-adult all-in = (487.50 - 8.25 - 16.00) / 2 = £231.63 approx."
       },
       "2024": {
         "purchaseDate": "2023-06-23",
@@ -48,7 +48,7 @@
         },
         "orderTotal": 439.75,
         "allInPerAdult": 209.0,
-        "notes": "1 adult + 1 teen + 1 child. Bought Jun 2023 (~12 months out). Service charges explicit: \u00a319 adult, \u00a318.50 teen. All-in adult = \u00a3190 + \u00a319 = \u00a3209. All-in teen = \u00a3185 + \u00a318.50 = \u00a3203.50. Ticketmaster fee model still explicit at this point."
+        "notes": "1 adult + 1 teen + 1 child. Bought Jun 2023 (~12 months out). Service charges explicit: £19 adult, £18.50 teen. All-in adult = £190 + £19 = £209. All-in teen = £185 + £18.50 = £203.50. Ticketmaster fee model still explicit at this point."
       },
       "2025": {
         "purchaseDate": "2024-06-28",
@@ -71,7 +71,7 @@
         },
         "fees": {},
         "orderTotal": 660.05,
-        "notes": "1 adult + 1 teen + 1 student. Bought Jun 2024 (~12 months out). Fees included in price \u2014 no separate service charge shown."
+        "notes": "1 adult + 1 teen + 1 student. Bought Jun 2024 (~12 months out). Fees included in price — no separate service charge shown."
       },
       "2026": {
         "purchaseDate": "2025-06-26",
@@ -86,7 +86,7 @@
         },
         "fees": {},
         "orderTotal": 706.05,
-        "notes": "3 \u00d7 'Sky presents the Isle of Wight Weekend Adult Ticket' \u2014 all show as Adult GA. Group of 2 adults + teen (teen on adult ticket or same-price tier). Bought Jun 2025 (~12 months out). Sky-sponsored early bird at \u00a3231.35 vs standard \u00a3368.",
+        "notes": "3 × 'Sky presents the Isle of Wight Weekend Adult Ticket' — all show as Adult GA. Group of 2 adults + teen (teen on adult ticket or same-price tier). Bought Jun 2025 (~12 months out). Sky-sponsored early bird at £231.35 vs standard £368.",
         "twicketsResale": {
           "purchaseDate": "2026-04-20",
           "listingPrice": 223.0,
@@ -96,14 +96,14 @@
           "totalPaid": 243.45,
           "tier": "Weekend Camping Ticket",
           "daysToFestival": 59,
-          "feeNotes": "Twickets buyer fee structure: seller listed at \u00a3223; offer of \u00a3210 accepted by seller. Twickets buyer fee \u00a333.45 (\u224815.9% on accepted price) added at checkout. Confirmed all-in total: \u00a3243.45.",
+          "feeNotes": "Twickets buyer fee structure: seller listed at £223; offer of £210 accepted by seller. Twickets buyer fee £33.45 (≈15.9% on accepted price) added at checkout. Confirmed all-in total: £243.45.",
           "comparisons": {
             "earlyBirdAllIn": 231.35,
             "twicketsResaleAllIn": 243.45,
             "resalePremium": 12.1,
-            "note": "Twickets resale (59 days out, offers required) was \u00a312.10 more expensive all-in than the early bird purchased 12 months prior at \u00a3231.35. Early bird provided certainty and lower total cost."
+            "note": "Twickets resale (59 days out, offers required) was £12.10 more expensive all-in than the early bird purchased 12 months prior at £231.35. Early bird provided certainty and lower total cost."
           },
-          "notes": "Twickets resale ticket. Listing \u00a3223, offer \u00a3210 accepted. Twickets buyer fee \u00a333.45 added at checkout (confirmed all-in: \u00a3243.45). Despite offer negotiation, ended up \u00a312.10 more than early bird (\u00a3231.35). Purchased 59 days before festival."
+          "notes": "Twickets resale ticket. Listing £223, offer £210 accepted. Twickets buyer fee £33.45 added at checkout (confirmed all-in: £243.45). Despite offer negotiation, ended up £12.10 more than early bird (£231.35). Purchased 59 days before festival."
         }
       }
     }
@@ -132,28 +132,28 @@
           "date": "2025-10-01",
           "type": "lineup_1",
           "label": "Lineup 1",
-          "description": "First headline announcement (approx \u2014 update with actual date)",
+          "description": "First headline announcement (approx — update with actual date)",
           "confirmed": false
         },
         {
           "date": "2026-02-01",
           "type": "lineup_2",
           "label": "Lineup 2",
-          "description": "Second headline announcement (approx \u2014 update with actual date)",
+          "description": "Second headline announcement (approx — update with actual date)",
           "confirmed": false
         },
         {
           "date": "2026-05-15",
           "type": "sold_out",
           "label": "Sold Out",
-          "description": "IoW Festival 2026 officially sold out \u2014 Twickets is now the only route to tickets",
+          "description": "IoW Festival 2026 officially sold out — Twickets is now the only route to tickets",
           "confirmed": true
         },
         {
           "date": "2026-05-27",
           "type": "ticket_transfer",
           "label": "TM Transfers",
-          "description": "Ticketmaster opened ticket transfers on 27 May 2026 \u2014 sellers can now transfer e-tickets directly to buyers, reducing uncertainty and likely driving listing activity",
+          "description": "Ticketmaster opened ticket transfers on 27 May 2026 — sellers can now transfer e-tickets directly to buyers, reducing uncertainty and likely driving listing activity",
           "confirmed": true
         }
       ],
@@ -166,17 +166,17 @@
             "date": "2026-05-25",
             "basePriceGBP": 295.0,
             "allInGBP": null,
-            "note": "Single Verified Resale listing visible; service charge unknown, base below \u00a3320 face"
+            "note": "Single Verified Resale listing visible; service charge unknown, base below £320 face"
           },
           {
             "date": "2026-05-28",
-            "basePriceGBP": 200.6,
-            "allInGBP": 221.08,
-            "note": "Confirmed all-in at checkout but ticket unavailable \u2014 likely held in basket. Indicative only."
+            "basePriceGBP": 200.0,
+            "allInGBP": 236.0,
+            "note": "Price rose during the day: £221.08 all-in at 05:21 BST (ticket unavailable — likely in basket), then £236.00 all-in (£200 base + £36 fees) confirmed at 08:24 BST."
           }
         ]
       },
-      "notes": "IoW Festival 2026. Sky presents. Early bird Sky price \u00a3231.35 (Jun 2025). Standard face value \u00a3368. Primary sales sold out 15 May 2026 at \u00a3320. Greg's resale all-in \u00a3243.45 (Apr 2026). TM Verified Resale now live alongside Twickets \u2014 see ticketmasterVerifiedResaleSnapshots for observations (volatile, not used for signals)."
+      "notes": "IoW Festival 2026. Sky presents. Early bird Sky price £231.35 (Jun 2025). Standard face value £368. Primary sales sold out 15 May 2026 at £320. Greg's resale all-in £243.45 (Apr 2026). TM Verified Resale now live alongside Twickets — see ticketmasterVerifiedResaleSnapshots for observations (volatile, not used for signals)."
     },
     "2027": {
       "festival": {
@@ -192,14 +192,14 @@
           "date": "2026-10-01",
           "type": "lineup_1",
           "label": "Lineup 1",
-          "description": "First headline announcement \u2014 update when confirmed",
+          "description": "First headline announcement — update when confirmed",
           "confirmed": false
         },
         {
           "date": "2027-02-01",
           "type": "lineup_2",
           "label": "Lineup 2",
-          "description": "Second headline announcement \u2014 update when confirmed",
+          "description": "Second headline announcement — update when confirmed",
           "confirmed": false
         }
       ],
