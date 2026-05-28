@@ -124,13 +124,13 @@ async function scrape(eventConfig) {
     }
 
     // Wait for listings to load
-    await page.waitForSelector('#list > li', { timeout: 15000 });
+    await page.waitForSelector('#tws_ticket-list > li', { timeout: 15000 });
     log('Listings loaded');
 
-    // Click "Load more" until all listings are visible
+    // Click "Show more" until all listings are visible
     let loadMoreClicks = 0;
     while (true) {
-      const loadMoreBtn = page.locator('button:has-text("Load more")');
+      const loadMoreBtn = page.locator('button:has-text("Show more")');
       const isVisible = await loadMoreBtn.isVisible().catch(() => false);
       if (!isVisible) break;
       await loadMoreBtn.click();
@@ -142,27 +142,51 @@ async function scrape(eventConfig) {
 
     // Extract listings
     const listings = await page.evaluate(() => {
-      const items = document.querySelectorAll('#list > li');
+      // Twickets redesigned their DOM in May 2026:
+      //   Old: #list > li  →  New: #tws_ticket-list > li
+      //   Old: .inline-block.no-of-ticket-summary (qty + price in one string)
+      //   New: .tw-ticket-title (qty), .tw-ticket-price-amount (price), .tw-ticket-price-unit (/ticket or /total)
+      //   Old: .tier-name  →  New: .tw-ticket-description (falls back to .tw-ticket-subtitle)
+      //   Old: .price-declaration  →  New: .tw-badge-gray-sm
+      //   Old: .make-offer-available[hidden]  →  New: .tw-badge-offers-sm (presence = offers available)
+      const items = document.querySelectorAll('#tws_ticket-list > li');
       const results = [];
       items.forEach(li => {
-        const summaryEl       = li.querySelector('.inline-block.no-of-ticket-summary');
-        const priceDeclaration = li.querySelector('.price-declaration');
-        const tierEl          = li.querySelector('.tier-name');
-        const offersEl        = li.querySelector('.make-offer-available');
+        const titleEl         = li.querySelector('.tw-ticket-title');
+        const descEl          = li.querySelector('.tw-ticket-description');
+        const subtitleEl      = li.querySelector('.tw-ticket-subtitle');
+        const priceAmountEl   = li.querySelector('.tw-ticket-price-amount');
+        const priceUnitEl     = li.querySelector('.tw-ticket-price-unit');
+        const priceDeclarationEl = li.querySelector('.tw-badge-gray-sm');
+        const offersEl        = li.querySelector('.tw-badge-offers-sm');
 
-        const summaryText = summaryEl ? summaryEl.innerText.trim() : '';
-        const tierText    = tierEl    ? tierEl.innerText.replace(/\n/g, ' | ').trim() : '';
-        const priceDecl   = priceDeclaration ? priceDeclaration.innerText.trim() : '';
-        const hasOffers   = offersEl ? !offersEl.hidden : false;
+        const titleText   = titleEl       ? titleEl.innerText.trim() : '';
+        // Tier: prefer the free-text description field; fall back to subtitle
+        const tierText    = (descEl && descEl.innerText.trim())
+                              ? descEl.innerText.trim()
+                              : (subtitleEl ? subtitleEl.innerText.trim() : '');
+        const priceDecl   = priceDeclarationEl ? priceDeclarationEl.innerText.trim() : '';
+        const hasOffers   = !!offersEl;
+        const priceUnitText = priceUnitEl ? priceUnitEl.innerText.trim() : '/ticket';
 
-        const qtyMatch   = summaryText.match(/^(\d+)\s+ticket/);
-        const priceMatch = summaryText.match(/£([\d,]+(?:\.\d+)?)/);
+        // Parse qty from title: "2x General Admission" → 2, "4 tickets" → 4
+        const qtyMatch  = titleText.match(/^(\d+)/);
+        const qty       = qtyMatch ? parseInt(qtyMatch[1]) : 1;
 
+        // Parse price
+        const priceText  = priceAmountEl ? priceAmountEl.innerText.trim() : '';
+        const priceMatch = priceText.match(/£([\d,]+(?:\.\d+)?)/);
         if (!priceMatch) return;
 
+        let price = parseFloat(priceMatch[1].replace(',', ''));
+        // When price is shown as /total (mixed bundles), convert to per-ticket
+        if (priceUnitText === '/total' && qty > 1) {
+          price = Math.round((price / qty) * 100) / 100;
+        }
+
         results.push({
-          qty:    qtyMatch ? parseInt(qtyMatch[1]) : 1,
-          price:  parseFloat(priceMatch[1].replace(',', '')),
+          qty,
+          price,
           tier:   tierText,
           pctDeclaration: priceDecl,
           offers: hasOffers,
