@@ -14,7 +14,7 @@ and serves a live dashboard via Netlify.
 - 📱 Mobile-responsive dashboard
 - 🗂 Multi-year — works for 2026, 2027, and beyond
 
-> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Ticketmaster Verified Resale is now live (lowest confirmed £221.08 all-in, 28 May 2026) — both Twickets and TM Verified Resale are routes to tickets.
+> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Ticketmaster Verified Resale is now live — both Twickets and TM Verified Resale are routes to tickets.
 
 ---
 
@@ -60,6 +60,8 @@ All prices shown on the dashboard are **all-in estimates** — the listed asking
 Twickets buyer fee (~15.9% on the transaction price, added at checkout). This makes resale prices
 directly comparable to face value purchases where fees are typically bundled.
 
+> Ticketmaster Verified Resale is now live alongside Twickets. Spot prices observed from £200.60 base (28 May 2026) but volatile and not always purchasable — logged in `events.json` as `ticketmasterVerifiedResaleSnapshots` for reference. The `ticketmasterCurrent` signal baseline stays at £320 (last reliable pre-sellout price).
+
 The 15.9% model is accurate to within ~£2 on typical listings. The actual Twickets rate varies
 slightly (15–15.93% depending on transaction value) but the overestimate is acceptable for
 comparison purposes.
@@ -70,7 +72,6 @@ Reference baselines (stored in `public/data/events.json` → `baselines`):
 |---|---|---|
 | Ticketmaster face value | £368 | Standard adult camping — primary sales now closed (sold out 15 May 2026) |
 | Ticketmaster last price | £320 | Price at sell-out — no longer purchasable via primary sales |
-| Ticketmaster Verified Resale | £221.08 | Lowest confirmed all-in via TM Verified Resale (28 May 2026, base £200.60) |
 | Owner early bird | £231.35 | Sky early bird, purchased Jun 2025, fees bundled |
 | Resale purchase | £243.45 | Twickets Apr 2026: listed £223, offer £210 accepted + £33.45 fee |
 
