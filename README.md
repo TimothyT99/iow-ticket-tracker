@@ -14,7 +14,7 @@ and serves a live dashboard via Netlify.
 - 📱 Mobile-responsive dashboard
 - 🗂 Multi-year — works for 2026, 2027, and beyond
 
-> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Twickets is the only route to tickets.
+> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Ticketmaster Verified Resale is now live (lowest confirmed £221.08 all-in, 28 May 2026) — both Twickets and TM Verified Resale are routes to tickets.
 
 ---
 
@@ -70,6 +70,7 @@ Reference baselines (stored in `public/data/events.json` → `baselines`):
 |---|---|---|
 | Ticketmaster face value | £368 | Standard adult camping — primary sales now closed (sold out 15 May 2026) |
 | Ticketmaster last price | £320 | Price at sell-out — no longer purchasable via primary sales |
+| Ticketmaster Verified Resale | £221.08 | Lowest confirmed all-in via TM Verified Resale (28 May 2026, base £200.60) |
 | Owner early bird | £231.35 | Sky early bird, purchased Jun 2025, fees bundled |
 | Resale purchase | £243.45 | Twickets Apr 2026: listed £223, offer £210 accepted + £33.45 fee |
 
