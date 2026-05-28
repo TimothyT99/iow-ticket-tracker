@@ -105,7 +105,7 @@ jobs:
         run: |
           git config user.name  'IoW Ticket Bot'
           git config user.email 'bot@noreply.github.com'
-          git add data/snapshots.json data/events.json public/data/snapshots.json
+          git add data/snapshots.json public/data/snapshots.json
           # Only commit if there are actual changes
           if git diff --staged --quiet; then
             echo "No changes to commit (snapshot already exists within last 12 min, or scraper skipped)"
