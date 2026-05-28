@@ -114,11 +114,11 @@
           "confirmed": true
         },
         {
-          "date": "2026-06-01",
+          "date": "2026-05-27",
           "type": "ticket_transfer",
           "label": "TM Transfers",
-          "description": "Ticketmaster expected to open ticket transfers (approx — update when confirmed). Sellers can transfer e-tickets to buyers, reducing uncertainty and likely driving listing activity",
-          "confirmed": false
+          "description": "Ticketmaster opened ticket transfers on 27 May 2026 — sellers can now transfer e-tickets directly to buyers, reducing uncertainty and likely driving listing activity",
+          "confirmed": true
         }
       ],
       "baselines": {
