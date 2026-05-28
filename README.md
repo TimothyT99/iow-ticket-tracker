@@ -14,7 +14,7 @@ and serves a live dashboard via Netlify.
 - 📱 Mobile-responsive dashboard
 - 🗂 Multi-year — works for 2026, 2027, and beyond
 
-> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster primary sales are closed — Twickets is now the only route to tickets.
+> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Twickets is the only route to tickets.
 
 ---
 
@@ -64,7 +64,7 @@ The 15.9% model is accurate to within ~£2 on typical listings. The actual Twick
 slightly (15–15.93% depending on transaction value) but the overestimate is acceptable for
 comparison purposes.
 
-Reference baselines (stored in `data/events.json` → `baselines`):
+Reference baselines (stored in `public/data/events.json` → `baselines`):
 
 | Baseline | Price | Notes |
 |---|---|---|
@@ -77,7 +77,7 @@ Reference baselines (stored in `data/events.json` → `baselines`):
 
 ## Key events / announcements
 
-Events are stored in `data/events.json` → `announcements[]` and drive:
+Events are stored in `public/data/events.json` → `announcements[]` and drive:
 - Vertical marker lines on all three trend charts (colour-coded by type)
 - A global sold-out banner across all dashboard tabs
 - Banner on the Price Trends tab for upcoming lineup announcements
@@ -205,7 +205,7 @@ Go to GitHub → Actions → the failed run → scroll to **Artifacts** → down
 
 ### Record a sell-out or key milestone
 
-Edit `data/events.json` (and `public/data/events.json`) to add/update the event:
+Edit `public/data/events.json` to add/update the event:
 
 ```json
 "soldOut": true,
@@ -219,32 +219,20 @@ Edit `data/events.json` (and `public/data/events.json`) to add/update the event:
     "confirmed": true
   },
   {
-    "date": "2026-06-01",
+    "date": "2026-05-27",
     "type": "ticket_transfer",
     "label": "TM Transfers",
-    "description": "Ticketmaster opens e-ticket transfers — update date when confirmed",
-    "confirmed": false
+    "description": "Ticketmaster e-ticket transfers now open",
+    "confirmed": true
   }
 ]
 ```
 
 Commit and push — the sold-out banner appears immediately, chart markers update on next page load.
 
-### Confirm the Ticketmaster transfer date
-
-When Ticketmaster announces the transfer window, update the `ticket_transfer` entry in both
-`data/events.json` and `public/data/events.json`:
-
-```json
-{ "date": "2026-06-03", "type": "ticket_transfer", "label": "TM Transfers",
-  "description": "Ticketmaster e-ticket transfers now open", "confirmed": true }
-```
-
-Commit and push.
-
 ### Update lineup announcement dates
 
-Edit `data/events.json` (and `public/data/events.json`) when dates are confirmed:
+Edit `public/data/events.json` when dates are confirmed:
 
 ```json
 { "date": "2026-09-24", "type": "lineup_1", "label": "Lineup 1",
@@ -256,7 +244,7 @@ Commit and push — the chart marker and announcement banner update automaticall
 ### Update Ticketmaster current price
 
 If Ticketmaster changes the price (or primary sales close), update `baselines.ticketmasterCurrent`
-in both `data/events.json` and `public/data/events.json`, then commit and push.
+in `public/data/events.json`, then commit and push.
 
 ### Add IoW 2027
 
@@ -264,7 +252,7 @@ When 2027 tickets go on sale on Twickets:
 
 1. Go to the Twickets event page
 2. Copy the event ID from the URL: `twickets.live/en/event/`**`EVENTID`**
-3. Open `data/events.json` and update the `2027` section:
+3. Open `public/data/events.json` and update the `2027` section:
 
 ```json
 "2027": {
@@ -279,8 +267,7 @@ When 2027 tickets go on sale on Twickets:
 }
 ```
 
-4. Copy to `public/data/events.json`
-5. Commit and push — the scraper picks up the new year automatically
+4. Commit and push — the scraper picks up the new year automatically
 
 ---
 
@@ -293,28 +280,27 @@ iow-ticket-tracker/
 │   ├── scrape.js                  ← Playwright scraper (retries 3×, concurrent-push safe, screenshots on failure)
 │   ├── package.json
 │   └── package-lock.json          ← Required for Actions npm + Playwright cache
-├── data/                          ← Source of truth (committed by scraper bot)
-│   ├── snapshots.json             ← All price snapshots
-│   └── events.json                ← Festival config, baselines, announcements & historical purchases
+├── data/                          ← Written by scraper bot
+│   └── snapshots.json             ← All price snapshots (also mirrored to public/data/)
 ├── public/                        ← What Netlify serves
 │   ├── index.html                 ← Dashboard (single-file, no build step)
-│   └── data/                      ← Mirror of data/ (keep in sync)
-│       ├── snapshots.json
-│       └── events.json
+│   └── data/
+│       ├── snapshots.json         ← Mirror of data/snapshots.json (written by scraper on each run)
+│       └── events.json            ← Single source of truth: festival config, baselines, announcements & historical purchases
 └── netlify.toml
 ```
 
-> **Note:** `data/` and `public/data/` are kept in sync. The scraper writes `snapshots.json`
-> to both automatically. When editing `events.json` manually, copy it to `public/data/events.json`
-> before committing.
+> **`public/data/events.json` is the only copy of events.json.** The scraper reads it directly.
+> Edit it in place — no mirroring needed.
+>
+> `snapshots.json` is written to both `data/` and `public/data/` by the scraper on every run.
+> Never edit snapshots.json manually.
 
 ---
 
 ## Versioning
 
-Code changes are tagged (`v1.001`, `v1.002`, …). The automated bot commits (`data: snapshot …`)
-are not tagged — only intentional code releases are. The current code version tag is referenced
-in each bot commit message for traceability.
+Code changes use commit messages in the format `type(vX.XXX): description` — e.g. `fix(v1.004): update selectors`. The automated bot commits (`data: snapshot …`) are not versioned. Current code version: **v1.004**.
 
 To tag a release after a code commit:
 ```bash
@@ -329,7 +315,7 @@ git push --tags
 1. Launches a headless Chromium browser (via Playwright — cached between runs, ~2 min total)
 2. Navigates to the Twickets event page
 3. Dismisses the cookie banner
-4. Clicks "Load more" until all listings are visible
+4. Clicks "Show more" until all listings are visible
 5. Extracts: price, quantity, tier name, "accepting offers" flag
 6. Classifies each listing as `camping` or `non_camping` by keyword matching (see Tier classification above); excludes glamping, ferry, car park, child tickets, and other add-ons
 7. Computes summary stats for all listings + separate breakdowns by camping / non-camping type
