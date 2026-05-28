@@ -158,12 +158,25 @@
         }
       ],
       "baselines": {
-        "ticketmasterCurrent": 221.08,
+        "ticketmasterCurrent": 320.0,
         "ownerEarlyBird": 231.35,
         "gregsResale": 243.45,
-        "ticketmasterVerifiedResaleLowest": 221.08
+        "ticketmasterVerifiedResaleSnapshots": [
+          {
+            "date": "2026-05-25",
+            "basePriceGBP": 295.0,
+            "allInGBP": null,
+            "note": "Single Verified Resale listing visible; service charge unknown, base below \u00a3320 face"
+          },
+          {
+            "date": "2026-05-28",
+            "basePriceGBP": 200.6,
+            "allInGBP": 221.08,
+            "note": "Confirmed all-in at checkout but ticket unavailable \u2014 likely held in basket. Indicative only."
+          }
+        ]
       },
-      "notes": "IoW Festival 2026. Sky presents. Early bird Sky price \u00a3231.35 (Jun 2025). Standard face value \u00a3368. Primary sales sold out 15 May 2026. Ticketmaster Verified Resale live \u2014 lowest confirmed all-in \u00a3221.08 (28 May 2026, base \u00a3200.60). Greg's resale all-in \u00a3243.45 (Apr 2026). Both Twickets and Ticketmaster Verified Resale now route to tickets."
+      "notes": "IoW Festival 2026. Sky presents. Early bird Sky price \u00a3231.35 (Jun 2025). Standard face value \u00a3368. Primary sales sold out 15 May 2026 at \u00a3320. Greg's resale all-in \u00a3243.45 (Apr 2026). TM Verified Resale now live alongside Twickets \u2014 see ticketmasterVerifiedResaleSnapshots for observations (volatile, not used for signals)."
     },
     "2027": {
       "festival": {
