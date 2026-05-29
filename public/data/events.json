@@ -173,6 +173,12 @@
             "basePriceGBP": 200.0,
             "allInGBP": 236.0,
             "note": "Price rose during the day: £221.08 all-in at 05:21 BST (ticket unavailable — likely in basket), then £236.00 all-in (£200 base + £36 fees) confirmed at 08:24 BST."
+          },
+          {
+            "date": "2026-05-29",
+            "basePriceGBP": 221.08,
+            "allInGBP": null,
+            "note": "Clicking the resale listing redirects to Ticketmaster sign-in; full service charge breakdown requires login. £221.08 is the total shown on the listing itself (price includes delivery per TM)."
           }
         ]
       },
