@@ -177,7 +177,7 @@
           {
             "date": "2026-05-29",
             "basePriceGBP": 221.08,
-            "allInGBP": null,
+            "allInGBP": 221.08,
             "note": "Clicking the resale listing redirects to Ticketmaster sign-in; full service charge breakdown requires login. £221.08 is the total shown on the listing itself (price includes delivery per TM)."
           },
           {
@@ -194,9 +194,15 @@
           },
           {
             "date": "2026-06-01",
-            "basePriceGBP": 236.0,
-            "allInGBP": null,
+            "basePriceGBP": 221.08,
+            "allInGBP": 221.08,
             "note": "Price unchanged from last night's 19:03 check (£236.00). Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable. TM notes \"Price includes delivery\" on this page."
+          },
+          {
+            "date": "2026-06-02",
+            "basePriceGBP": 273.0,
+            "allInGBP": 313.95,
+            "note": ""
           }
         ]
       },
