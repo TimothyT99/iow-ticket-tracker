@@ -194,9 +194,9 @@
           },
           {
             "date": "2026-06-01",
-            "basePriceGBP": 221.08,
-            "allInGBP": 221.08,
-            "note": "Price unchanged from last night's 19:03 check (£236.00). Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable. TM notes \"Price includes delivery\" on this page."
+            "basePriceGBP": 230.1,
+            "allInGBP": null,
+            "note": "Price has dropped from £236.00 (07:04 check) to £230.10. Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable. TM notes \"Price includes delivery\" on this page."
           },
           {
             "date": "2026-06-02",
