@@ -89,9 +89,11 @@ Events are stored in `public/data/events.json` → `announcements[]` and drive:
 | `lineup_1`, `lineup_2` | Amber | Trend chart marker + banner when within 30 days |
 | `sold_out` | Red | Trend chart marker + global sold-out banner across all tabs |
 | `ticket_transfer` | Blue | Trend chart marker only (Ticketmaster opens e-ticket transfers) |
+| `policy_change` | Orange | Trend chart marker only (site policy change that may affect demand/supply) |
+| `price_is_wight` | — | Recorded in data only, no chart line (resident discount scheme, not a market signal) |
 
-The buy/sell signal logic only reacts to `lineup_1`/`lineup_2` announcements — `sold_out` and
-`ticket_transfer` events are intentionally excluded from signal proximity calculations.
+The buy/sell signal logic only reacts to `lineup_1`/`lineup_2` announcements — all other
+event types are intentionally excluded from signal proximity calculations.
 
 ---
 
