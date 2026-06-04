@@ -152,22 +152,22 @@
         {
           "date": "2026-05-27",
           "type": "ticket_transfer",
-          "label": "TM Transfers",
+          "label": "TM Ticket Transfers Opened",
           "description": "Ticketmaster opened ticket transfers on 27 May 2026 — sellers can now transfer e-tickets directly to buyers, reducing uncertainty and likely driving listing activity",
           "confirmed": true
         },
         {
           "date": "2026-06-02",
           "type": "price_is_wight",
-          "label": "PIW Tickets",
-          "description": "Price is Wight (IoW resident discount) tickets distributed ~2 Jun 2026. Separate resident-only scheme — unlikely to affect Twickets resale supply directly, but marks a point where all ticketing is finalised",
+          "label": "PIW Tickets Issued",
+          "description": "Price is Wight (IoW resident discount) tickets issued ~2 Jun 2026. Separate resident-only scheme — unlikely to affect Twickets resale supply directly, but marks a point where all ticketing is finalised",
           "confirmed": false
         },
         {
           "date": "2026-06-02",
           "type": "policy_change",
-          "label": "Policy Chg",
-          "description": "Significant chair/bag/trolley site policy change announced ~2 Jun 2026. May cause some attendees (particularly non-camping families) to reconsider, potentially increasing Twickets supply and softening non-camping prices",
+          "label": "New Bag and Trolley Policy",
+          "description": "New bag and trolley site policy announced ~2 Jun 2026. May cause some attendees (particularly non-camping families) to reconsider attending, potentially increasing Twickets supply and softening non-camping prices",
           "confirmed": false
         }
       ],
@@ -184,9 +184,39 @@
           },
           {
             "date": "2026-05-28",
-            "basePriceGBP": 200.0,
-            "allInGBP": 236.0,
-            "note": "Price rose during the day: £221.08 all-in at 05:21 BST (ticket unavailable — likely in basket), then £236.00 all-in (£200 base + £36 fees) confirmed at 08:24 BST."
+            "basePriceGBP": 200.6,
+            "allInGBP": 221.08,
+            "note": "Confirmed all-in at checkout but ticket unavailable — likely held in basket. Indicative only."
+          },
+          {
+            "date": "2026-05-29",
+            "basePriceGBP": 221.08,
+            "allInGBP": 221.08,
+            "note": "Clicking the resale listing redirects to Ticketmaster sign-in; full service charge breakdown requires login. £221.08 is the total shown on the listing itself (price includes delivery per TM)."
+          },
+          {
+            "date": "2026-05-30",
+            "basePriceGBP": 271.4,
+            "allInGBP": null,
+            "note": "Price unchanged from last night's 19:02 check (£271.40). Clicking the listing chevron redirects to Ticketmaster sign-in."
+          },
+          {
+            "date": "2026-05-31",
+            "basePriceGBP": 273.0,
+            "allInGBP": null,
+            "note": "Price unchanged from last night's 19:02 check (£273.00). Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable. TM notes 'Price includes delivery' on this page."
+          },
+          {
+            "date": "2026-06-01",
+            "basePriceGBP": 230.1,
+            "allInGBP": null,
+            "note": "Price has dropped from £236.00 (07:04 check) to £230.10. Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable."
+          },
+          {
+            "date": "2026-06-02",
+            "basePriceGBP": 273.0,
+            "allInGBP": 313.95,
+            "note": ""
           }
         ]
       },
