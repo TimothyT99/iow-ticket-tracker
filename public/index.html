@@ -476,35 +476,50 @@ function computeSignal(snaps, eventConfig) {
     return d >= -7 && d <= 14; // within a week past or 2 weeks before
   });
 
-  // Buy signal — compare all-in resale vs Ticketmaster current price
-  // Uses min all-in as the opportunity signal, not average (which is skewed by expensive listings)
-  const offerListings   = campListings.filter(l => l.offers);
-  const cheapestOffer   = offerListings.length ? allIn(Math.min(...offerListings.map(l => +l.price))) : null;
-  const savingVsTM      = tmPrice - minAI;
-  const savingPct       = Math.round(savingVsTM / tmPrice * 100);
-  const offerSavingVsTM = cheapestOffer ? Math.round((tmPrice - cheapestOffer) / tmPrice * 100) : null;
+  // Buy signal
+  // Post sell-out: TM is closed — frame entirely around resale market value,
+  // not vs Ticketmaster. Use recent market avg as the reference instead.
+  const soldOut       = eventConfig?.soldOut || false;
+  const offerListings = campListings.filter(l => l.offers);
+  const cheapestOffer = offerListings.length ? allIn(Math.min(...offerListings.map(l => +l.price))) : null;
+
+  function offerSavingPct(p, ref) { return Math.round((ref - p) / ref * 100) + '%'; }
 
   let buySignal, buyReason;
   if (daysTo < 7) {
-    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance, prices rising.`;
+    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance to buy. Expect prices to rise further as the festival approaches.`;
   } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
-    buySignal = 'wait'; buyReason = `${nearAnn.label} announcement in ${daysBetween(today, nearAnn.date)} days — prices likely to spike. Consider waiting until 2 weeks after.`;
-  } else if (minAI < tmPrice * 0.85 && momentum !== 'rising') {
-    // Floor is meaningfully below TM — flag opportunity, especially if offers available
-    const offerNote = cheapestOffer && cheapestOffer < tmPrice
-      ? ` Cheapest offer listing all-in ~${fmt(cheapestOffer)} (${offerSavingPct(cheapestOffer, tmPrice)}% below TM) — a negotiated offer may do better.`
+    buySignal = 'wait'; buyReason = `${nearAnn.label} in ${daysBetween(today, nearAnn.date)} days — prices may spike. Consider waiting until after.`;
+  } else if (soldOut) {
+    // Sold-out mode: compare to recent market avg, not TM (TM is closed)
+    const savingVsAvg = avgAI - minAI;
+    const offerNote   = cheapestOffer && cheapestOffer < avgAI
+      ? ` Cheapest offer listing all-in ~${fmt(cheapestOffer)} — a negotiated offer may do better.`
       : '';
-    buySignal = 'buy'; buyReason = `Cheapest all-in is ${fmt(minAI)} — ${savingPct}% below Ticketmaster (${fmt(tmPrice)}) with ${daysTo} days to go.${offerNote}`;
-  } else if (minAI < tmPrice && daysTo >= 14) {
-    const offerNote = cheapestOffer && cheapestOffer < tmPrice
-      ? ` ${offerListings.length} listings accepting offers — a negotiated bid around ${fmt(Math.min(...offerListings.map(l=>+l.price)))} listed could secure a deal.`
-      : '';
-    buySignal = 'watch'; buyReason = `Floor is ${fmt(minAI)} all-in vs Ticketmaster ${fmt(tmPrice)} (${savingPct}% saving). Avg is higher but deals exist at the bottom.${offerNote}`;
+    if (minAI < avgAI * 0.88 && momentum !== 'rising') {
+      buySignal = 'buy'; buyReason = `Festival sold out — Twickets only. Cheapest all-in ${fmt(minAI)} is ${Math.round(savingVsAvg/avgAI*100)}% below the current market avg (${fmt(avgAI)}) with ${daysTo} days to go.${offerNote}`;
+    } else if (daysTo <= 21) {
+      buySignal = 'buy'; buyReason = `${daysTo} days to festival and sold out — don't wait. Floor is ${fmt(minAI)} all-in. Prices typically rise in the final 3 weeks.${offerNote}`;
+    } else if (momentum === 'rising') {
+      buySignal = 'watch'; buyReason = `Prices rising post sell-out. Floor ${fmt(minAI)} all-in, avg ${fmt(avgAI)}. Act if a cheap listing appears — don't wait for a sustained dip.${offerNote}`;
+    } else {
+      buySignal = 'watch'; buyReason = `Market stable post sell-out. Floor ${fmt(minAI)}, avg ${fmt(avgAI)} all-in. Watch for cheaper listings — but note prices typically rise as the festival nears.${offerNote}`;
+    }
   } else {
-    buySignal = 'wait'; buyReason = `All-in avg ${fmt(avgAI)} vs Ticketmaster ${fmt(tmPrice)}. ${avgAI >= tmPrice ? 'Resale currently at or above Ticketmaster — no advantage yet.' : 'Some deals available but limited saving vs Ticketmaster.'}`;
+    // Pre sell-out: compare vs Ticketmaster as the alternative
+    const savingVsTM = tmPrice - minAI;
+    const savingPct  = Math.round(savingVsTM / tmPrice * 100);
+    const offerNote  = cheapestOffer && cheapestOffer < tmPrice
+      ? ` Cheapest offer listing all-in ~${fmt(cheapestOffer)} (${offerSavingPct(cheapestOffer, tmPrice)}% below TM).`
+      : '';
+    if (minAI < tmPrice * 0.85 && momentum !== 'rising') {
+      buySignal = 'buy'; buyReason = `Cheapest all-in is ${fmt(minAI)} — ${savingPct}% below Ticketmaster (${fmt(tmPrice)}) with ${daysTo} days to go.${offerNote}`;
+    } else if (minAI < tmPrice && daysTo >= 14) {
+      buySignal = 'watch'; buyReason = `Floor is ${fmt(minAI)} all-in vs Ticketmaster ${fmt(tmPrice)} (${savingPct}% saving). Deals exist at the bottom.${offerNote}`;
+    } else {
+      buySignal = 'wait'; buyReason = `All-in avg ${fmt(avgAI)} vs Ticketmaster ${fmt(tmPrice)}. ${avgAI >= tmPrice ? 'Resale at or above Ticketmaster — buy direct instead.' : 'Limited saving vs Ticketmaster right now.'}`;
+    }
   }
-
-  function offerSavingPct(p, ref) { return Math.round((ref - p) / ref * 100) + '%'; }
 
   // Sell signal
   let sellSignal, sellReason;
@@ -512,12 +527,14 @@ function computeSignal(snaps, eventConfig) {
     sellSignal = 'sell'; sellReason = `${nearAnn.label} announcement imminent — peak demand window. List now for best returns.`;
   } else if (daysTo <= 14) {
     sellSignal = 'sell'; sellReason = `Final 2 weeks — urgency buying creates a seller's market. List immediately.`;
+  } else if (soldOut && daysTo <= 28) {
+    sellSignal = 'sell'; sellReason = `Festival sold out and under 4 weeks away — demand is high. Good time to list if you have spares.`;
   } else if (momentum === 'rising') {
-    sellSignal = 'watch'; sellReason = `Prices rising (momentum up). Hold — may have further to run before the announcement spike.`;
+    sellSignal = 'watch'; sellReason = `Prices rising. Hold a little longer — but don't wait past the final 2 weeks.`;
   } else if (momentum === 'falling' && daysTo > 28) {
-    sellSignal = 'wait'; sellReason = `Prices falling. Wait for the next announcement or the final-week spike.`;
+    sellSignal = 'wait'; sellReason = `Prices falling. Wait — the final 3 weeks typically see a recovery spike.`;
   } else {
-    sellSignal = 'watch'; sellReason = `Market stable. Best sell windows: just before a lineup announcement, or the final 2 weeks.`;
+    sellSignal = 'watch'; sellReason = `Market stable. Best sell window: final 2–3 weeks as urgency buyers enter the market.`;
   }
 
   return { buySignal, buyReason, sellSignal, sellReason, stats, momentum, daysTo, fv, tmPrice, avgAI, minAI };
