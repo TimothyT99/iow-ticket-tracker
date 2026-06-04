@@ -790,14 +790,22 @@ function renderTrends(snaps, config, fv) {
     return cl.length ? Math.round(cl.filter(l => allIn(+l.price) < tmRef).length / cl.length * 100) : null;
   });
 
-  // Build vertical line annotations for all key events in anns[]
-  const annLines = anns.map(a => ({
-    label: a.date.slice(5),  // "MM-DD" to match chart x-axis labels
-    color: a.type === 'sold_out'        ? '#f85149'
-         : a.type === 'ticket_transfer' ? '#58a6ff'
-         : '#d2993a',
-    text: a.label,
-  }));
+  // Build vertical line annotations — one line per key event on the chart
+  // price_is_wight excluded: resident-only scheme, not a market signal
+  const ANN_COLORS = {
+    sold_out:        '#f85149',  // red
+    ticket_transfer: '#58a6ff',  // blue
+    policy_change:   '#ff9966',  // orange — potential supply disruption
+    lineup_1:        '#d2993a',  // amber
+    lineup_2:        '#d2993a',  // amber
+  };
+  const annLines = anns
+    .filter(a => a.type !== 'price_is_wight')
+    .map(a => ({
+      label: a.date.slice(5),
+      color: ANN_COLORS[a.type] || '#d2993a',
+      text:  a.label,
+    }));
 
   destroyChart('trend');
   charts.trend = new Chart(document.getElementById('trendChart'), {
