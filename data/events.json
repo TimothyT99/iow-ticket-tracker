@@ -217,6 +217,12 @@
             "basePriceGBP": 273.0,
             "allInGBP": 313.95,
             "note": ""
+          },
+          {
+            "date": "2026-06-03",
+            "basePriceGBP": 236.0,
+            "allInGBP": null,
+            "note": "⚠️ DEAL ALERT — Listed price £236.00 is under £280 threshold"
           }
         ]
       },
