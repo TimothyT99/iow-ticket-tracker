@@ -332,6 +332,12 @@ on the fly in the dashboard using the same keyword logic, so all historical data
 **Empty market:** If Twickets shows 0 classifiable listings, a snapshot is still written with
 `marketEmpty: true`. This records dry-market periods and Chart.js renders them as clean gaps.
 
+**Archive vs dashboard split:** `data/snapshots.json` is the complete archive — full listings[]
+data retained forever. `public/data/snapshots.json` is the Netlify-served dashboard copy — 
+listings[] stripped from snapshots older than 30 days (summary stats, inferredSold, and all
+metadata preserved). This keeps the dashboard payload lean (~2-3 KB/snap for older data vs
+~7 KB/snap with full listings) without ever losing raw data.
+
 ---
 
 ## Adjusting scrape frequency

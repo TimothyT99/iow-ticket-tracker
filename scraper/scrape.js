@@ -399,13 +399,36 @@ async function main() {
     process.exit(0);
   }
 
-  // Append to snapshots file (write to both data/ and public/data/ so Netlify serves latest)
+  // Append snapshot to the archive (data/snapshots.json — full fidelity, never pruned)
   snapsData.meta.lastUpdated = today;
   snapsData.snapshots.push(newSnap);
-  const snapsJson = JSON.stringify(snapsData, null, 2);
-  fs.writeFileSync(SNAPS_FILE, snapsJson, 'utf8');
-  fs.writeFileSync(PUBLIC_SNAPS_FILE, snapsJson, 'utf8');
-  log(`✅ Snapshot written to ${SNAPS_FILE} and ${PUBLIC_SNAPS_FILE}`);
+  fs.writeFileSync(SNAPS_FILE, JSON.stringify(snapsData, null, 2), 'utf8');
+  log(`✅ Archive written to ${SNAPS_FILE} (full listings retained)`);
+
+  // ── DASHBOARD-OPTIMISED COPY (public/data/snapshots.json) ─────────────────
+  // Strip listings[] from snapshots older than 30 days before writing the public
+  // copy. Summary stats, inferredSold, and all metadata are preserved — only the
+  // raw per-listing arrays are omitted. The dashboard only needs listings for the
+  // latest snapshot; all charts and history views use summary data.
+  //
+  // data/snapshots.json  = complete archive (full fidelity, stays in git)
+  // public/data/snapshots.json = lean dashboard copy (served by Netlify)
+  const ARCHIVE_DAYS = 30;
+  let stripped = 0;
+  const publicSnaps = {
+    ...snapsData,
+    snapshots: snapsData.snapshots.map(s => {
+      if (s.listings && s.listings.length > 0 && daysBetween(s.date, today) > ARCHIVE_DAYS) {
+        const { listings, ...rest } = s;
+        stripped++;
+        return rest;
+      }
+      return s;
+    }),
+  };
+  if (stripped > 0) log(`Dashboard copy: stripped listings[] from ${stripped} snapshots older than ${ARCHIVE_DAYS} days`);
+  fs.writeFileSync(PUBLIC_SNAPS_FILE, JSON.stringify(publicSnaps, null, 2), 'utf8');
+  log(`✅ Dashboard copy written to ${PUBLIC_SNAPS_FILE}`);
 }
 
 main().catch(err => {
