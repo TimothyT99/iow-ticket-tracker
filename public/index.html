@@ -793,8 +793,9 @@ function renderTrends(snaps, config, fv) {
   const tmResaleRadius = snaps.map((_, i) => tmResaleData[i] != null ? 10 : 0);
   const hasTMResale    = tmResaleData.some(v => v != null);
   // Split listings by type for each snapshot
-  const campSnap = s => s.listings.filter(l => listingType(l) === 'camping');
-  const ncSnap   = s => s.listings.filter(l => listingType(l) === 'non_camping');
+  // Old snapshots (>30 days) have listings[] stripped from the dashboard copy — use [] as fallback
+  const campSnap = s => (s.listings || []).filter(l => listingType(l) === 'camping');
+  const ncSnap   = s => (s.listings || []).filter(l => listingType(l) === 'non_camping');
   // All-in averages and mins — camping (primary) and non-camping (secondary)
   const campAvgs = snaps.map(s => { const cl = campSnap(s); const st = computeStats(cl, fv); return st.avg != null ? allIn(st.avg) : null; });
   const campMins = snaps.map(s => { const cl = campSnap(s); const st = computeStats(cl, fv); return st.min != null ? allIn(st.min) : null; });
@@ -918,7 +919,7 @@ function renderSignals(snaps, config, fv) {
   // Signal chart — reuse trend data (skip if < 2 snapshots, single point looks broken)
   const sigActiveSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.filter(l=>listingType(l)==='camping').length > 0);
   const labels = snaps.map(s => s.date.slice(5));
-  const avgs   = snaps.map(s => { const cl = s.listings.filter(l=>listingType(l)==='camping'); const st = computeStats(cl, fv); return st.avg ? allIn(st.avg) : null; });
+  const avgs   = snaps.map(s => { const cl = (s.listings||[]).filter(l=>listingType(l)==='camping'); const st = computeStats(cl, fv); return st.avg ? allIn(st.avg) : null; });
   destroyChart('signal');
   if (sigActiveSnaps.length < 2) {
     document.getElementById('signalChart').style.display = 'none';
@@ -1030,7 +1031,7 @@ function renderSold(snaps) {
   // Scatter chart — confirmed sold + inferred sold + asking
   destroyChart('sold');
   // All prices on scatter chart are all-in estimates
-  const askData           = snaps.flatMap(s => s.listings.map(l => ({ x: s.daysToFestival, y: allIn(+l.price) })));
+  const askData           = snaps.flatMap(s => (s.listings||[]).map(l => ({ x: s.daysToFestival, y: allIn(+l.price) })));
   // Split inferred: ≤TM = likely sold, >TM = probably removed/relisted
   const inferredSoldData    = all.filter(s => allIn(s.price) <= tmPrice).map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
   const inferredRemovedData = all.filter(s => allIn(s.price) > tmPrice).map(s => ({ x: s.snapshotDaysTo, y: allIn(s.price) }));
@@ -1106,8 +1107,8 @@ function renderSetup(snaps, fv) {
   const tbody = document.getElementById('historyBody');
   tbody.innerHTML = '';
   snaps.slice().reverse().forEach(s => {
-    const cl  = s.listings.filter(l => listingType(l) === 'camping');
-    const ncl = s.listings.filter(l => listingType(l) === 'non_camping');
+    const cl  = (s.listings||[]).filter(l => listingType(l) === 'camping');
+    const ncl = (s.listings||[]).filter(l => listingType(l) === 'non_camping');
     const st  = computeStats(cl, fv);
     const pct = cl.length ? Math.round(cl.filter(l => allIn(+l.price) < tmPrice).length / cl.length * 100) : 0;
     tbody.innerHTML += `<tr>
