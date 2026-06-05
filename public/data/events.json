@@ -223,6 +223,18 @@
             "basePriceGBP": 236.0,
             "allInGBP": null,
             "note": "⚠️ DEAL ALERT — Listed price £236.00 is under £280 threshold"
+          },
+          {
+            "date": "2026-06-04",
+            "basePriceGBP": 236.0,
+            "allInGBP": null,
+            "note": "⚠️ DEAL ALERT (provisional): listed price £236.00 is well under £280; even with typical service charge the all-in likely lands under £280. Worth checking manually while signed in."
+          },
+          {
+            "date": "2026-06-05",
+            "basePriceGBP": 221.08,
+            "allInGBP": null,
+            "note": "⚠️ DEAL ALERT: listed resale £221.08 is under £280 (down £14.92 from £236.00 yesterday; all-in total unconfirmed — service charges may apply at checkout)"
           }
         ]
       },
