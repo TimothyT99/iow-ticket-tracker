@@ -235,6 +235,12 @@
             "basePriceGBP": 221.08,
             "allInGBP": null,
             "note": "⚠️ DEAL ALERT: listed resale £221.08 is under £280 (down £14.92 from £236.00 yesterday; all-in total unconfirmed — service charges may apply at checkout)"
+          },
+          {
+            "date": "2026-06-06",
+            "basePriceGBP": 236.0,
+            "allInGBP": null,
+            "note": ""
           }
         ]
       },
