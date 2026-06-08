@@ -179,7 +179,7 @@
           {
             "date": "2026-05-25",
             "basePriceGBP": 295.0,
-            "allInGBP": null,
+            "allInGBP": 295.0,
             "note": "Single Verified Resale listing visible; service charge unknown, base below £320 face"
           },
           {
@@ -197,61 +197,61 @@
           {
             "date": "2026-05-30",
             "basePriceGBP": 271.4,
-            "allInGBP": null,
+            "allInGBP": 271.4,
             "note": "Price unchanged from last night's 19:02 check (£271.40). Clicking the listing chevron redirects to Ticketmaster sign-in."
           },
           {
             "date": "2026-05-31",
             "basePriceGBP": 273.0,
-            "allInGBP": null,
+            "allInGBP": 273.0,
             "note": "Price unchanged from last night's 19:02 check (£273.00). Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable. TM notes 'Price includes delivery' on this page."
           },
           {
             "date": "2026-06-01",
             "basePriceGBP": 230.1,
-            "allInGBP": null,
+            "allInGBP": 230.1,
             "note": "Price has dropped from £236.00 (07:04 check) to £230.10. Only one resale listing visible. Clicking the listing chevron redirects to Ticketmaster sign-in; full breakdown unavailable."
           },
           {
             "date": "2026-06-02",
             "basePriceGBP": 273.0,
-            "allInGBP": 313.95,
-            "note": ""
+            "allInGBP": 273.0,
+            "note": "Corrected 2026-06-08: listed £273.00 is all-in (TM rule); previous £313.95 was a mis-read (+15% added in error)."
           },
           {
             "date": "2026-06-03",
             "basePriceGBP": 236.0,
-            "allInGBP": null,
+            "allInGBP": 236.0,
             "note": "⚠️ DEAL ALERT — Listed price £236.00 is under £280 threshold"
           },
           {
             "date": "2026-06-04",
             "basePriceGBP": 236.0,
-            "allInGBP": null,
+            "allInGBP": 236.0,
             "note": "⚠️ DEAL ALERT (provisional): listed price £236.00 is well under £280; even with typical service charge the all-in likely lands under £280. Worth checking manually while signed in."
           },
           {
             "date": "2026-06-05",
             "basePriceGBP": 221.08,
-            "allInGBP": null,
+            "allInGBP": 221.08,
             "note": "⚠️ DEAL ALERT: listed resale £221.08 is under £280 (down £14.92 from £236.00 yesterday; all-in total unconfirmed — service charges may apply at checkout)"
           },
           {
             "date": "2026-06-06",
             "basePriceGBP": 236.0,
-            "allInGBP": null,
+            "allInGBP": 236.0,
             "note": ""
           },
           {
             "date": "2026-06-07",
             "basePriceGBP": 177.0,
-            "allInGBP": null,
+            "allInGBP": 177.0,
             "note": ""
           },
           {
             "date": "2026-06-08",
             "basePriceGBP": 236.0,
-            "allInGBP": null,
+            "allInGBP": 236.0,
             "note": ""
           }
         ]
