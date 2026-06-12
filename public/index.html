@@ -213,10 +213,13 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     </div>
 
     <div class="info">
-      <strong>Typical resale pattern for major UK festivals:</strong><br>
-      Prices start high → dip in the 4–6 week window (ideal buy zone) → spike sharply in the final 10 days.
-      Lineup announcements in <strong>Sep/Oct</strong> and <strong>Jan/Feb</strong> typically cause a short-term price spike (2–3 weeks)
-      followed by a correction. Selling just before or just after an announcement is usually the strongest exit.
+      <!-- AUTO-COMMENTARY:trends START — refreshed by the daily tracker job; do not hand-edit between markers -->
+      <strong>2026 observed (our data, 27 Apr →):</strong> avg all-in rose ~9% in the days after sell-out (15 May),
+      peaked ~£419 around 24 May, then eased to ~£368–396 after Ticketmaster transfers opened (27 May).
+      Cheap listings go fast — 82% of disappearing listings vanished the same day.
+      <em>Hypotheses (not yet testable from our data):</em> final-week price peak; lineup-announcement spikes.
+      Full evidence and rationale: <strong>Setup tab</strong>.
+      <!-- AUTO-COMMENTARY:trends END -->
     </div>
   </div>
 
@@ -321,6 +324,29 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       Every 15 minutes during UK waking hours (07:00–23:00 BST) in peak season, triggered by
       cron-job.org → GitHub <code>workflow_dispatch</code>. GitHub Actions hourly schedule acts as
       fallback. Off-season: once daily. Trigger a manual run anytime from the GitHub Actions tab.</p>
+    </div>
+
+    <div class="sec-title">Commentary &amp; Evidence</div>
+    <div class="card card-p" style="font-size:13px;line-height:1.8;color:var(--text2)">
+      <!-- AUTO-COMMENTARY:setup START — refreshed by the daily tracker job; do not hand-edit between markers -->
+      <p><strong style="color:var(--blue)">How commentary on this site works</strong><br>
+      Claims on the data tabs are kept short and limited to what our own snapshot data supports.
+      Anything not yet observable in the data is explicitly labelled a <em>hypothesis</em>. The working is below.
+      Source: our snapshots, 27 Apr 2026 onwards, every 15 minutes during UK hours.</p><br>
+
+      <p><strong style="color:var(--green)">Observed in 2026 data</strong><br>
+      • <strong>Sell-out impact (15 May):</strong> camping avg all-in rose ~£378 → ~£412 (+9%) within days; supply fell from ~28 to ~17 listings.<br>
+      • <strong>TM transfers opened (27 May):</strong> supply recovered and avg eased from its ~£419 peak (24 May) to ~£368–396 by early June.<br>
+      • <strong>Floor volatility:</strong> the daily cheapest camping all-in ranged £227–£360 across the final month. The cheapest floors (£227–£250) appeared 10–16 days out — not in the often-cited 4–6 week window.<br>
+      • <strong>Speed:</strong> 82% of listings that disappeared (213 of 261) vanished the same day they were last seen. Cheap listings do not wait for you.<br>
+      • <strong>Disappearance ≠ sale:</strong> only ~25% of disappearances were priced ≤ £320 all-in (plausible sales); the rest were more likely removed or relisted.<br>
+      • <strong>Non-camping:</strong> mixed evidence. The non-camping floor was often the cheapest ticket listed (as low as £213 all-in), but the non-camping <em>average</em> was not consistently below camping — at times it sat above.</p><br>
+
+      <p><strong style="color:var(--yellow)">Hypotheses — stated as such on the data tabs</strong><br>
+      • <strong>Lineup announcement spikes (+10–20% for 2–3 weeks):</strong> from general UK festival resale patterns; our 2026 data starts after both announcements. To be tested against 2027.<br>
+      • <strong>Final-week price peak:</strong> widely assumed, but 2026 avg eased from 24 May to 8 Jun. The festival's final days will settle this.<br>
+      • <strong>"Best buy window is 4–6 weeks out":</strong> partially contradicted in 2026 — see floor volatility above.</p>
+      <!-- AUTO-COMMENTARY:setup END -->
     </div>
 
     <div class="sec-title">Snapshot History</div>
@@ -487,7 +513,7 @@ function computeSignal(snaps, eventConfig) {
 
   let buySignal, buyReason;
   if (daysTo < 7) {
-    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance to buy. Expect prices to rise further as the festival approaches.`;
+    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance to buy. Act fast on anything cheap: in 2026, 82% of disappearing listings vanished the same day.`;
   } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
     buySignal = 'wait'; buyReason = `${nearAnn.label} in ${daysBetween(today, nearAnn.date)} days — prices may spike. Consider waiting until after.`;
   } else if (soldOut) {
@@ -499,11 +525,11 @@ function computeSignal(snaps, eventConfig) {
     if (minAI < avgAI * 0.88 && momentum !== 'rising') {
       buySignal = 'buy'; buyReason = `Festival sold out — Twickets only. Cheapest all-in ${fmt(minAI)} is ${Math.round(savingVsAvg/avgAI*100)}% below the current market avg (${fmt(avgAI)}) with ${daysTo} days to go.${offerNote}`;
     } else if (daysTo <= 21) {
-      buySignal = 'buy'; buyReason = `${daysTo} days to festival and sold out — don't wait. Floor is ${fmt(minAI)} all-in. Prices typically rise in the final 3 weeks.${offerNote}`;
+      buySignal = 'buy'; buyReason = `${daysTo} days to festival and sold out — don't wait. Floor is ${fmt(minAI)} all-in and volatile (£227–£360 since mid-May); cheap listings vanish within hours.${offerNote}`;
     } else if (momentum === 'rising') {
       buySignal = 'watch'; buyReason = `Prices rising post sell-out. Floor ${fmt(minAI)} all-in, avg ${fmt(avgAI)}. Act if a cheap listing appears — don't wait for a sustained dip.${offerNote}`;
     } else {
-      buySignal = 'watch'; buyReason = `Market stable post sell-out. Floor ${fmt(minAI)}, avg ${fmt(avgAI)} all-in. Watch for cheaper listings — but note prices typically rise as the festival nears.${offerNote}`;
+      buySignal = 'watch'; buyReason = `Market stable post sell-out. Floor ${fmt(minAI)}, avg ${fmt(avgAI)} all-in. Watch for cheap listings and act fast — most vanish same-day. A final-week rise is a hypothesis, not yet seen in 2026 data.${offerNote}`;
     }
   } else {
     // Pre sell-out: compare vs Ticketmaster as the alternative
@@ -524,17 +550,17 @@ function computeSignal(snaps, eventConfig) {
   // Sell signal
   let sellSignal, sellReason;
   if (nearAnn && daysBetween(today, nearAnn.date) <= 7 && daysBetween(today, nearAnn.date) >= -3) {
-    sellSignal = 'sell'; sellReason = `${nearAnn.label} announcement imminent — peak demand window. List now for best returns.`;
+    sellSignal = 'sell'; sellReason = `${nearAnn.label} announcement imminent — typically a demand spike (hypothesis from UK festival patterns, untested in our data). Strong listing window.`;
   } else if (daysTo <= 14) {
-    sellSignal = 'sell'; sellReason = `Final 2 weeks — urgency buying creates a seller's market. List immediately.`;
+    sellSignal = 'sell'; sellReason = `Final 2 weeks — list now if selling. Demand is real (82% of 2026 disappearances were same-day), but price expectations should be realistic: avg eased after TM transfers added supply.`;
   } else if (soldOut && daysTo <= 28) {
     sellSignal = 'sell'; sellReason = `Festival sold out and under 4 weeks away — demand is high. Good time to list if you have spares.`;
   } else if (momentum === 'rising') {
     sellSignal = 'watch'; sellReason = `Prices rising. Hold a little longer — but don't wait past the final 2 weeks.`;
   } else if (momentum === 'falling' && daysTo > 28) {
-    sellSignal = 'wait'; sellReason = `Prices falling. Wait — the final 3 weeks typically see a recovery spike.`;
+    sellSignal = 'wait'; sellReason = `Prices falling. A late recovery spike is a hypothesis only — don't hold past the final 2 weeks.`;
   } else {
-    sellSignal = 'watch'; sellReason = `Market stable. Best sell window: final 2–3 weeks as urgency buyers enter the market.`;
+    sellSignal = 'watch'; sellReason = `Market stable. Hypothesis: best sell window is the final 2–3 weeks as urgency buyers enter.`;
   }
 
   return { buySignal, buyReason, sellSignal, sellReason, stats, momentum, daysTo, fv, tmPrice, avgAI, minAI };
@@ -626,13 +652,10 @@ function renderMarket(snaps, latest, fv) {
   const campFV = config?.faceValues?.adult_camping || 368;
   const marketInfoEl = document.getElementById('marketTypeInfo');
   if (marketInfoEl) {
-    marketInfoEl.innerHTML = `<strong>ℹ️ Two ticket types — same face value, but resale market behaves differently:</strong>
-      Ticketmaster sells <strong>Camping</strong> and <strong>Non-Camping</strong> weekend tickets at the <em>same price</em> (${fmt(campFV)}) —
-      the split is a capacity planning mechanism, not a value difference. Both give full festival access Thursday–Sunday.
-      However, on resale, <strong>non-camping tickets often list and sell lower</strong> due to seller psychology
-      (perceived as less desirable) and buyer self-selection (people who have camping sorted elsewhere).
-      Both types are tracked separately so this real market divergence is visible. Stats and signals
-      use camping as the primary series; non-camping appears as a lighter secondary series.`;
+    marketInfoEl.innerHTML = `<strong>ℹ️ Camping vs non-camping:</strong> same face value (${fmt(campFV)}), same Thu–Sun access — only the campsite differs.
+      2026 resale evidence is <strong>mixed</strong>: the non-camping <em>floor</em> is often the cheapest ticket listed,
+      but the non-camping <em>average</em> hasn't stayed below camping. Stats and signals use camping (primary series);
+      rationale in the Setup tab.`;
   }
 
   // Stats — camping only
@@ -744,7 +767,7 @@ function renderTrends(snaps, config, fv) {
     annBanner.className = 'info amber';
     annBanner.style.cssText = '';
     annBanner.style.display = '';
-    annBanner.innerHTML = `<strong>📣 ${upcoming.label}:</strong> ${upcoming.description} — ${d >= 0 ? `in ${d} days` : `${Math.abs(d)} days ago`}. Prices typically spike around lineup announcements.`;
+    annBanner.innerHTML = `<strong>📣 ${upcoming.label}:</strong> ${upcoming.description} — ${d >= 0 ? `in ${d} days` : `${Math.abs(d)} days ago`}. Lineup announcements may spike prices (hypothesis — testing against 2027 data).`;
   } else {
     annBanner.style.display = 'none';
   }
@@ -899,8 +922,8 @@ function renderSignals(snaps, config, fv) {
   const anns  = config?.announcements || [];
   const festDate = config?.festival?.date;
   const allDates = [
-    ...anns.map(a => ({ date: a.date, label: a.label + ' Announcement', impact: 'Price spike +10–20% for 2–3 weeks', type: 'ann' })),
-    { date: festDate, label: '🎪 Festival', impact: 'Deadline — prices peak in final 7 days', type: 'fest' }
+    ...anns.map(a => ({ date: a.date, label: a.label + ' Announcement', impact: 'Hypothesis: short-term spike (no 2026 data — testing in 2027)', type: 'ann' })),
+    { date: festDate, label: '🎪 Festival', impact: 'Final deadline — final-week peak unproven (2026 avg eased 24 May–8 Jun)', type: 'fest' }
   ].sort((a,b) => a.date.localeCompare(b.date));
 
   const kdBody = document.getElementById('keyDatesBody');
