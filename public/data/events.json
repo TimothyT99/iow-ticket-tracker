@@ -271,6 +271,12 @@
             "basePriceGBP": 234.06,
             "allInGBP": 234.06,
             "note": "⚠️ DEAL ALERT: £234.06 all-in is under £280"
+          },
+          {
+            "date": "2026-06-12",
+            "basePriceGBP": 177.0,
+            "allInGBP": 177.0,
+            "note": "⚠️ DEAL ALERT: cheapest resale all-in £177.00 is under £280"
           }
         ]
       },
