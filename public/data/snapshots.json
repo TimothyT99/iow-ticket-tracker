@@ -452463,6 +452463,157 @@
         }
       },
       "inferredSold": []
+    },
+    {
+      "year": "2026",
+      "date": "2026-06-18",
+      "timestamp": "2026-06-18T06:01:31.772Z",
+      "daysToFestival": 0,
+      "source": "automated",
+      "listings": [
+        {
+          "qty": 2,
+          "price": 368,
+          "tier": "Camping weekend tickets",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 2,
+          "price": 322,
+          "tier": "Weekend camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend camping ticket",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 263.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "20% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 263.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "20% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 2,
+          "price": 287.5,
+          "tier": "General admission camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 258.75,
+          "tier": "Weekend non camping",
+          "pctDeclaration": "29% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 287.5,
+          "tier": "Adult non camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 4,
+          "price": 207,
+          "tier": "Weekend camping tickets",
+          "pctDeclaration": "22% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 2,
+          "price": 287.5,
+          "tier": "Full weekend, camping",
+          "pctDeclaration": "21% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Adult Non-Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Adult Non-Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "non_camping"
+        },
+        {
+          "qty": 2,
+          "price": 230,
+          "tier": "Camping weekend ticket",
+          "pctDeclaration": "37% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        }
+      ],
+      "summary": {
+        "count": 15,
+        "min": 207,
+        "max": 368,
+        "avg": 307.66,
+        "median": 287.5,
+        "camping": {
+          "count": 9,
+          "min": 207,
+          "max": 368,
+          "avg": 311.78,
+          "median": 322
+        },
+        "nonCamping": {
+          "count": 6,
+          "min": 258.75,
+          "max": 368,
+          "avg": 301.49,
+          "median": 275.43
+        }
+      },
+      "inferredSold": []
     }
   ],
   "confirmedTransactions": [
