@@ -562893,6 +562893,173 @@
         }
       },
       "inferredSold": []
+    },
+    {
+      "year": "2026",
+      "date": "2026-06-18",
+      "timestamp": "2026-06-18T10:03:24.448Z",
+      "daysToFestival": 0,
+      "source": "automated",
+      "listings": [
+        {
+          "qty": 2,
+          "price": 368,
+          "tier": "Camping weekend tickets",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 2,
+          "price": 322,
+          "tier": "Weekend camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend camping ticket",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 217.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "34% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 217.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "34% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 2,
+          "price": 287.5,
+          "tier": "General admission camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 201.25,
+          "tier": "Weekend non camping",
+          "pctDeclaration": "45% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 287.5,
+          "tier": "Adult non camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 4,
+          "price": 207,
+          "tier": "Weekend camping tickets",
+          "pctDeclaration": "22% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 2,
+          "price": 287.5,
+          "tier": "Full weekend, camping",
+          "pctDeclaration": "21% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Adult Non-Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 368,
+          "tier": "Weekend Adult Non-Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": true,
+          "type": "non_camping"
+        },
+        {
+          "qty": 2,
+          "price": 230,
+          "tier": "Camping weekend ticket",
+          "pctDeclaration": "37% less than face value (+fees)",
+          "offers": true,
+          "type": "camping"
+        },
+        {
+          "qty": 1,
+          "price": 345,
+          "tier": "Islander Non Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 172.5,
+          "tier": "Weekend ticket no camping",
+          "pctDeclaration": "19% less than face value (+fees)",
+          "offers": true,
+          "type": "non_camping"
+        }
+      ],
+      "summary": {
+        "count": 17,
+        "min": 172.5,
+        "max": 368,
+        "avg": 293.11,
+        "median": 287.5,
+        "camping": {
+          "count": 9,
+          "min": 207,
+          "max": 368,
+          "avg": 311.78,
+          "median": 322
+        },
+        "nonCamping": {
+          "count": 8,
+          "min": 172.5,
+          "max": 368,
+          "avg": 272.12,
+          "median": 252.43
+        }
+      },
+      "inferredSold": []
     }
   ],
   "confirmedTransactions": [
