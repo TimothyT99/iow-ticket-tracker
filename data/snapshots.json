@@ -563239,6 +563239,63 @@
           "note": "Accepting Offers — actual sold price may be lower than listed"
         }
       ]
+    },
+    {
+      "year": "2026",
+      "date": "2026-06-18",
+      "timestamp": "2026-06-18T10:31:40.898Z",
+      "daysToFestival": 0,
+      "source": "automated",
+      "listings": [
+        {
+          "qty": 1,
+          "price": 217.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "34% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 217.35,
+          "tier": "Islander Weekend Non Camp",
+          "pctDeclaration": "34% less than face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 287.5,
+          "tier": "Adult non camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        },
+        {
+          "qty": 1,
+          "price": 345,
+          "tier": "Islander Non Camping",
+          "pctDeclaration": "Face value (+fees)",
+          "offers": false,
+          "type": "non_camping"
+        }
+      ],
+      "summary": {
+        "count": 4,
+        "min": 217.35,
+        "max": 345,
+        "avg": 266.8,
+        "median": 252.43,
+        "camping": null,
+        "nonCamping": {
+          "count": 4,
+          "min": 217.35,
+          "max": 345,
+          "avg": 266.8,
+          "median": 252.43
+        }
+      },
+      "inferredSold": []
     }
   ],
   "confirmedTransactions": [
