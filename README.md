@@ -14,7 +14,20 @@ and serves a live dashboard via Netlify.
 - 📱 Mobile-responsive dashboard
 - 🗂 Multi-year — works for 2026, 2027, and beyond
 
-> **2026 status:** IoW Festival 2026 officially sold out on **15 May 2026**. Ticketmaster e-ticket transfers opened **27 May 2026**. Ticketmaster Verified Resale is now live — both Twickets and TM Verified Resale are routes to tickets.
+> **Status (23 Jun 2026):** IoW Festival 2026 is **complete** (sold out 15 May, held 18–21 Jun). The tracker is now in **off-season / historical** mode — the dashboard defaults to **2027**, 2026 is a frozen archive (tagged "— complete" in the year selector), and the scraper idles cleanly until 2027 goes on sale. 2027 resale is expected to open in **early July 2026**; little further activity until **Sep/Oct** (lineup / main sale).
+
+---
+
+## Season lifecycle (how it behaves year-round)
+
+The tracker is built to run continuously across years and degrade gracefully between festivals. Behaviour by phase:
+
+- **In season (festival is upcoming):** scraper collects Twickets resale data at the configured cadence; dashboard defaults to that year; buy/sell signals are live.
+- **At festival close:** once `festival.date` has passed, the dashboard automatically switches its default to the next configured year, marks the finished season "— complete", and shows a **🏁 Festival Complete** state instead of a live signal (no more "−N days to festival" nonsense). The finished season's data stays fully browsable via the year selector.
+- **Post-festival / off-season:** the Twickets event page disappears, so the scraper detects there is no configured upcoming festival and **exits 0 cleanly** (no failures, no junk data). An upcoming year that isn't on sale yet shows "isn't on sale yet — tracking starts automatically once tickets go on sale".
+- **Next presale:** the moment you set the next year's `twicketsEventId` + `twicketsUrl` (+ face values) in `events.json`, the scraper **auto-resumes** from the next run and the dashboard flips from the placeholder to live data — no code change required. Event-specific scheduled tasks should be recreated fresh at this point so they bind to the current model.
+
+> The scraper targets the *soonest configured festival that hasn't happened yet*, never the calendar year — so it never wastes runs on a finished event and never silently skips next year. Empty markets are recorded as `marketEmpty`, not treated as errors; only an unrecognisable page (DOM change) fails loudly.
 
 ---
 
@@ -316,6 +329,8 @@ git push --tags
 
 ## How the scraper works
 
+**Which event it targets:** before launching the browser, the scraper picks the *soonest configured festival that hasn't happened yet* (a year whose `twicketsUrl` is set and whose `festival.date` is still in the future, within 2 years). A specific `--year` overrides this. If no configured festival is currently upcoming — e.g. this year's is over and next year isn't on sale yet — it logs an off-season message and **exits 0** without scraping. This is why post-festival runs go green instead of failing on a dead event page.
+
 1. Launches a headless Chromium browser (via Playwright — cached between runs, ~2 min total)
 2. Navigates to the Twickets event page
 3. Dismisses the cookie banner
@@ -329,8 +344,12 @@ git push --tags
 **Historical compat:** Older snapshots without a `type` field on each listing are classified
 on the fly in the dashboard using the same keyword logic, so all historical data displays correctly.
 
-**Empty market:** If Twickets shows 0 classifiable listings, a snapshot is still written with
-`marketEmpty: true`. This records dry-market periods and Chart.js renders them as clean gaps.
+**Empty market vs broken page:** The scraper waits for the listings *container* (`#tws_ticket-list`),
+which renders even when the market is empty. If the container is present but holds 0 listings, a
+snapshot is still written with `marketEmpty: true` (records dry-market periods; Chart.js renders
+clean gaps). If the container never appears, the page structure is unrecognised (event gone or
+Twickets redesigned the DOM) and the run **fails loudly** — so a real breakage is never silently
+logged as an empty market.
 
 **Archive vs dashboard split:** `data/snapshots.json` is the complete archive — full listings[]
 data retained forever. `public/data/snapshots.json` is the Netlify-served dashboard copy — 
