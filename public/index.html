@@ -215,11 +215,11 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="info">
       <!-- AUTO-COMMENTARY:trends START — final 2026 retrospective (season complete) -->
       <strong>2026 final retrospective (full season, 27 Apr – 18 Jun):</strong>
-      Camping all-in resale peaked ~£425 in late May — just after the 15 May sell-out — then <em>softened</em> into the festival,
-      averaging the high-£340s in the final week (~18% below the peak).
+      Camping all-in resale peaked ~£416 in late May — just after the 15 May sell-out — then <em>softened</em> into the festival,
+      averaging ~£350 in the final week (~15% below the peak).
       The much-talked-about final-week price spike never arrived: the average stayed roughly flat and only ticked up on the eve
       (17 Jun, ~£361) as supply collapsed. The cheapest window in 2026 was the <strong>final 1–2 weeks</strong>
-      (clean single-ticket floors ~£225–255 all-in), not the usual "4–6 weeks out" — but you had to move fast: 87% of listings that
+      (single-ticket floors ~£227–255 all-in), not the usual "4–6 weeks out" — but you had to move fast: 87% of listings that
       vanished did so the same day. Full evidence: <strong>Setup tab</strong>.
       <!-- AUTO-COMMENTARY:trends END -->
     </div>
@@ -331,20 +331,22 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       season have now been settled.</p><br>
 
       <p><strong style="color:var(--green)">What the 2026 data showed</strong><br>
-      • <strong>Prices fell into the festival — they didn't spike.</strong> Camping avg all-in peaked ~£425 in late May (just after the
-      15 May sell-out, around TM transfers opening 27 May), then eased to the high-£340s in the final week: roughly £410 at 3–4 weeks
-      out vs ~£348 in the last week.<br>
-      • <strong>The cheapest window was the final 1–2 weeks.</strong> Median daily floor was ~£233 all-in inside the last 7 days, vs
-      ~£305–320 at 15–45 days out. The conventional "buy 4–6 weeks out" did <em>not</em> hold — later was cheaper.<br>
+      • <strong>Prices fell into the festival — they didn't spike.</strong> Camping avg all-in peaked ~£416 in late May (just after the
+      15 May sell-out, around TM transfers opening 27 May), then eased to ~£350 in the final week: roughly £406 at 3–4 weeks
+      out vs ~£352 in the last week.<br>
+      • <strong>The cheapest window was the final 1–2 weeks.</strong> Median daily floor was ~£253 all-in inside the last 7 days
+      (cheapest single ticket £227), vs ~£307–320 at 15–45 days out. The conventional "buy 4–6 weeks out" did <em>not</em> hold —
+      later was cheaper.<br>
       • <strong>But cheap meant fast.</strong> 87% of listings that disappeared (405 of 463) vanished the same day they were last seen.
-      Clean single-ticket floors bottomed around £225–255 all-in.<br>
-      • <strong>"Cheap" can mislead — check what's included.</strong> A handful of sub-£170 "camping" listings were actually
-      car+camping bundles or campervan / facilities passes (e.g. "1× Car, 1× Weekend camping"), not standalone weekend tickets.<br>
+      Single-ticket floors bottomed around £227–255 all-in.<br>
+      • <strong>Bundles &amp; non-ticket passes are excluded.</strong> The camping figures ignore multi-item lots and passes that the
+      old keyword classifier used to count — from a £58 campsite "facilities" pass and adult+infant lots to campervan-pitch passes up
+      to £527. These had badly skewed the floor (and inflated the average), so they were removed and guarded against in future.<br>
       • <strong>Disappearance ≠ sale.</strong> Only ~38% of disappearances (175 of 463) were priced ≤ £320 all-in (plausible sale
       prices); the rest were more likely withdrawn or relisted.<br>
       • <strong>Supply dried up sharply at the end.</strong> Camping listings peaked at 28 (13 May), fell to 13 by 11 Jun and 9 on the
       eve, and reached 0 on festival day — only a few non-camping leftovers (£217–£345 all-in) remained.<br>
-      • <strong>Non-camping ≈ camping overall.</strong> Season averages were near-identical (camping ~£386, non-camping ~£382), and the
+      • <strong>Non-camping ≈ camping overall.</strong> Season averages were near-identical (camping ~£383, non-camping ~£380), and the
       non-camping floor was the cheapest ticket on 41% of days. No consistent non-camping discount emerged.</p><br>
 
       <p><strong style="color:var(--yellow)">Hypotheses — now settled by the full season</strong><br>
@@ -430,16 +432,31 @@ const allIn = p => Math.round(+p * (1 + TWICKETS_FEE) * 100) / 100;
 const NON_CAMPING_KW  = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
 const CAMPING_KW      = ['camping', 'camp'];
 const GENERAL_ADM_KW  = ['general admission', 'general admit'];
+// Non-ticket items / add-ons that must never count as a standalone weekend ticket (mirror scraper).
+const EXCLUDE_KW      = ['child', 'parking', 'car park', 'glamping', 'lodge', 't-shirt', 'lanyard',
+                         'programme', 'ferry', 'coach', 'bus', 'harvest moon', 'lakeside',
+                         'campervan', 'infant', 'nature calls', 'facilities'];
+// Below this listed price a "weekend ticket" is a multi-item lot/junk, not a single ticket (~45% of face).
+const MIN_PLAUSIBLE_PRICE = 168;
 function classifyTier(tier) {
   const t = (tier || '').toLowerCase();
+  if (EXCLUDE_KW.some(k => t.includes(k))) return 'unknown';
   if (NON_CAMPING_KW.some(k => t.includes(k))) return 'non_camping';
   if (CAMPING_KW.some(k => t.includes(k))) return 'camping';
   // Plain 'General Admission' without a camping qualifier → non_camping
   if (GENERAL_ADM_KW.some(k => t.includes(k))) return 'non_camping';
   return 'unknown';
 }
-// Use stored type if present (new snapshots), otherwise classify from tier name (historical)
-function listingType(l) { return l.type || classifyTier(l.tier); }
+// Use stored type if present (new snapshots), otherwise classify from tier name (historical).
+// Two guards keep bundles/non-tickets out of the stats even if a stored type is stale:
+//   • a stored 'excluded' type (set by the Jun 2026 data cleanup) → treated as unknown
+//   • an implausibly cheap "weekend ticket" (a lot priced as a total) → treated as unknown
+function listingType(l) {
+  let t = l.type || classifyTier(l.tier);
+  if (t === 'excluded') return 'unknown';
+  if ((t === 'camping' || t === 'non_camping') && +l.price < MIN_PLAUSIBLE_PRICE) return 'unknown';
+  return t;
+}
 
 function getYearSnaps() {
   return SNAPS.snapshots
@@ -701,7 +718,7 @@ function renderMarket(snaps, latest, fv) {
   if (marketInfoEl) {
     marketInfoEl.innerHTML = `<strong>ℹ️ Camping vs non-camping:</strong> same face value (${fmt(campFV)}), same Thu–Sun access — only the campsite differs.
       In 2026 the evidence was <strong>mixed</strong>: the non-camping floor was the cheapest ticket on 41% of days, but the season
-      averages ended up near-identical (camping ~£386, non-camping ~£382). Stats and signals use camping (primary series); full rationale in the Setup tab.`;
+      averages ended up near-identical (camping ~£383, non-camping ~£380). Stats and signals use camping (primary series); full rationale in the Setup tab.`;
   }
 
   // Stats — camping only

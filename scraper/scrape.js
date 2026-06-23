@@ -60,23 +60,37 @@ function log(msg) {
 const NON_CAMPING_KEYWORDS = ['non-camping', 'non camping', 'noncamping', 'no camping', 'non camp', 'not camping'];
 const CAMPING_KEYWORDS     = ['camping', 'camp'];
 const GENERAL_ADMISSION_KW = ['general admission', 'general admit'];
+// Non-ticket items and add-ons that must never count as a standalone weekend ticket.
+// 'campervan', 'infant', 'nature calls' (campsite facilities pass) and 'facilities' were
+// added Jun 2026 after these slipped through as "camping" and skewed the stats — e.g.
+// "Campervan with Power" (a pitch pass) and "1x adult, 1x Infant camping" (a bundle).
 const EXCLUDE_KEYWORDS     = ['child', 'parking', 'car park', 'glamping', 'lodge', 't-shirt',
                                'lanyard', 'programme', 'ferry', 'coach', 'bus', 'harvest moon',
-                               'lakeside'];
+                               'lakeside', 'campervan', 'infant', 'nature calls', 'facilities'];
+
+// Price-plausibility floor (listed £, before fees). A "weekend ticket" priced below this is
+// almost always a multi-item lot priced as a total (e.g. "1x Car, 1x Weekend camping" £143.75)
+// or junk — not a single ticket. ~45% of 2026 face value (£368); the cheapest genuine single
+// ticket all season listed at £170.20. Revisit if a future year's face value changes materially.
+const MIN_PLAUSIBLE_PRICE = 168;
 
 /**
  * Classify a tier name as 'camping', 'non_camping', or null (exclude entirely).
- * Returns null for anything that isn't a recognisable adult weekend ticket.
+ * Returns null for anything that isn't a recognisable single adult weekend ticket.
+ * Pass the listed price to also reject implausibly-cheap bundle/lot listings.
  */
-function classifyTier(tier) {
+function classifyTier(tier, price) {
   const t = tier.toLowerCase();
   if (EXCLUDE_KEYWORDS.some(k => t.includes(k))) return null;
-  if (NON_CAMPING_KEYWORDS.some(k => t.includes(k))) return 'non_camping';
-  if (CAMPING_KEYWORDS.some(k => t.includes(k))) return 'camping';
+  let type = null;
+  if (NON_CAMPING_KEYWORDS.some(k => t.includes(k))) type = 'non_camping';
+  else if (CAMPING_KEYWORDS.some(k => t.includes(k))) type = 'camping';
   // Plain 'General Admission' with no camping qualifier — treated as non_camping
   // (e.g. "General Admission" vs "General Admission Camping" which is caught above)
-  if (GENERAL_ADMISSION_KW.some(k => t.includes(k))) return 'non_camping';
-  return null; // unrecognised — exclude rather than misclassify
+  else if (GENERAL_ADMISSION_KW.some(k => t.includes(k))) type = 'non_camping';
+  // Price-plausibility guard: an implausibly cheap "weekend ticket" is a bundle/lot, not a ticket.
+  if (type && price != null && +price < MIN_PLAUSIBLE_PRICE) return null;
+  return type; // null = unrecognised/excluded — exclude rather than misclassify
 }
 
 // ── SCRAPER ────────────────────────────────────────────────────────────────
@@ -215,7 +229,7 @@ async function scrape(eventConfig) {
 
     // Classify each listing — keep camping + non_camping, drop unrecognised/excluded
     const classifiedListings = listings
-      .map(l => ({ ...l, type: classifyTier(l.tier) }))
+      .map(l => ({ ...l, type: classifyTier(l.tier, l.price) }))
       .filter(l => l.type !== null);
 
     const campingCount    = classifiedListings.filter(l => l.type === 'camping').length;
