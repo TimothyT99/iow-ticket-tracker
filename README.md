@@ -54,16 +54,25 @@ in all tables — so any price divergence is measurable over time.
 
 | Priority | Keyword match | Result |
 |---|---|---|
-| 1 | `glamping`, `ferry`, `car park`, `child`, `coach`, `bus`, `lanyard`, etc. | Excluded |
+| 1 | `glamping`, `ferry`, `car park`, `child`, `coach`, `bus`, `lanyard`, `campervan`, `infant`, `nature calls`, `facilities`, etc. | Excluded |
 | 2 | `non-camping`, `no camping`, `non camp`, etc. | `non_camping` |
 | 3 | `camping`, `camp` | `camping` |
 | 4 | `general admission`, `general admit` | `non_camping` (confirmed real festival tickets) |
 | 5 | Anything else | Excluded |
+| 6 | Price-plausibility floor: a camping/non-camping listing priced **below £168** (≈45% of face value) | Excluded — it's a multi-item lot priced as a total, not a single ticket |
 
 Non-camping keywords are checked before camping keywords to avoid false positives on tiers
 like "Weekend Adult Non-Camping" that contain "camping" as a substring. Plain "General Admission"
 tiers are confirmed genuine festival tickets on Twickets (verified by direct listing inspection);
 ferry/coach add-ons are caught by priority 1 before reaching this check.
+
+**Why the price floor + extra exclusions (added Jun 2026):** campervan-pitch passes (e.g. "Campervan
+with Power", listed up to £527), and multi-item lots priced as a single total ("1× Car, 1× Weekend
+camping" at £143.75; "1× adult, 1× Infant camping") were slipping through as `camping` and skewing the
+stats — especially the floor. They're now excluded by keyword and by the £168 plausibility floor in both
+the scraper and the dashboard. The dashboard also honours a stored `type: "excluded"` flag (set by the
+Jun 2026 historical cleanup) and applies the price floor at read time, so old data displays clean too.
+The cheapest genuine single ticket all 2026 season listed at £170.20 — comfortably above the floor.
 
 ---
 
