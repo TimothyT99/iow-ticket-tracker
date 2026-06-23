@@ -160,8 +160,8 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
   <!-- Sold-out alert — shown across all tabs when soldOut: true in events.json -->
   <div id="soldOutBanner" style="display:none;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);border-radius:10px;padding:14px 18px;font-size:13px;color:#f85149;margin-bottom:16px;line-height:1.6;">
-    🎟️ <strong>Festival sold out (15 May 2026)</strong> — Ticketmaster primary sales are closed at £320.
-    Twickets is now the main resale route. Ticketmaster Verified Resale is also active — prices are being manually sampled and shown on the trend chart.
+    🏁 <strong>2026 season complete.</strong> The Isle of Wight Festival 2026 sold out on 15 May and was held 18–21 June 2026.
+    This is the historical 2026 archive — the full Twickets resale history and Ticketmaster Verified Resale samples are preserved in the tabs below.
   </div>
 
   <!-- ═══════ MARKET NOW ═══════ -->
@@ -389,14 +389,17 @@ function init() {
   // Populate year selector
   const years = Object.keys(EVENTS.years).sort().reverse();
   const sel   = document.getElementById('yearSelect');
+  const todayISO = new Date().toISOString().split('T')[0];
   years.forEach(y => {
     const opt = document.createElement('option');
-    opt.value = y; opt.textContent = 'IoW ' + y;
+    // Tag past festivals so the dropdown is self-documenting (e.g. "IoW 2026 — complete")
+    const festPast = (EVENTS.years[y]?.festival?.date || '') < todayISO;
+    opt.value = y; opt.textContent = 'IoW ' + y + (festPast ? ' — complete' : '');
     sel.appendChild(opt);
   });
-  // Default to the year that actually has snapshot data, not just the latest year
-  const yearsWithData = years.filter(y => SNAPS.snapshots.some(s => s.year === y));
-  setYear(yearsWithData[0] || years[0]);
+  // Default to the most recent festival year (2027 onward), even before its data exists.
+  // Past seasons (e.g. 2026) remain selectable as completed historical archives.
+  setYear(years[0]);
 }
 
 function setYear(year) {
@@ -474,6 +477,16 @@ function computeSignal(snaps, eventConfig) {
   const tmPrice   = eventConfig?.baselines?.ticketmasterCurrent || 320;
   const today     = new Date().toISOString().split('T')[0];
   const daysTo    = daysBetween(today, eventConfig?.festival?.date || '2099-01-01');
+  // Festival is over → this is a historical season. Live buy/sell signals no longer apply.
+  if (daysTo < 0) {
+    const yr = (eventConfig?.festival?.date || '').slice(0, 4);
+    return {
+      buySignal: 'complete', sellSignal: 'complete',
+      buyReason: `The ${yr} festival finished on ${eventConfig?.festival?.date} (${Math.abs(daysTo)} days ago). This is a completed season shown for reference — there is no live buy signal. The full ${yr} price history is preserved in the tabs above.`,
+      sellReason: `The ${yr} festival is over, so selling no longer applies. Explore the historical market, trends, and likely-sold data in the other tabs.`,
+      daysTo, tmPrice: eventConfig?.baselines?.ticketmasterCurrent || 320,
+    };
+  }
   // Use most recent snapshot that actually has camping listings for price signals
   // Signals are camping-only — that's the product being compared vs Ticketmaster camping price
   const activeSnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.filter(l => listingType(l) === 'camping').length > 0);
@@ -632,7 +645,10 @@ function renderAll() {
 function renderMarket(snaps, latest, fv) {
   const info = document.getElementById('snapshotInfo');
   if (!latest) {
-    info.innerHTML = 'No snapshots yet. Run the scraper to start collecting data.';
+    const cfg = getEventConfig();
+    info.innerHTML = (cfg && !cfg.twicketsEventId)
+      ? `📅 <strong>${activeYear} isn't on sale yet.</strong> Resale tracking starts automatically once ${activeYear} tickets go on sale and the Twickets event opens — there's no ${activeYear} market data to show yet. Use the year selector above to view a completed season.`
+      : 'No snapshots yet. Run the scraper to start collecting data.';
     return;
   }
   const config       = getEventConfig();
@@ -777,7 +793,7 @@ function renderTrends(snaps, config, fv) {
   const nonEmptySnaps = snaps.filter(s => !s.marketEmpty && s.listings && s.listings.length > 0);
   if (snaps.length === 0) {
     notice.style.display = '';
-    notice.innerHTML = '⏳ <strong>No snapshots yet</strong> — run the scraper to start collecting data.';
+    notice.innerHTML = `⏳ <strong>No ${activeYear} data yet</strong> — resale tracking begins automatically once ${activeYear} tickets go on sale. Switch year above to view a completed season.`;
     return;
   } else if (nonEmptySnaps.length === 0) {
     const lastSnap = snaps[snaps.length - 1];
@@ -897,14 +913,14 @@ function renderSignals(snaps, config, fv) {
   const sig = computeSignal(snaps, config);
   const row = document.getElementById('signalRow');
 
-  const signalIcon = { buy:'🟢', watch:'🟡', wait:'🟠', urgent:'🔴', sell:'🔵', insufficient:'⚪' };
-  const signalClass= { buy:'buy', watch:'buy', wait:'wait', urgent:'buy', sell:'sell', insufficient:'wait' };
+  const signalIcon = { buy:'🟢', watch:'🟡', wait:'🟠', urgent:'🔴', sell:'🔵', insufficient:'⚪', complete:'🏁' };
+  const signalClass= { buy:'buy', watch:'buy', wait:'wait', urgent:'buy', sell:'sell', insufficient:'wait', complete:'wait' };
 
   row.innerHTML = `
     <div class="signal ${signalClass[sig.buySignal]||'wait'}">
       <div class="signal-icon">${signalIcon[sig.buySignal]||'⚪'}</div>
       <div class="signal-body">
-        <h4>${sig.buySignal === 'buy' ? '✅ Good Time to Buy' : sig.buySignal === 'urgent' ? '⚡ Buy Urgently' : sig.buySignal === 'watch' ? '👀 Watch the Market' : '⏳ Wait to Buy'}</h4>
+        <h4>${sig.buySignal === 'complete' ? '🏁 Festival Complete' : sig.buySignal === 'buy' ? '✅ Good Time to Buy' : sig.buySignal === 'urgent' ? '⚡ Buy Urgently' : sig.buySignal === 'watch' ? '👀 Watch the Market' : '⏳ Wait to Buy'}</h4>
         <p>${sig.buyReason || 'Insufficient data'}</p>
         ${sig.stats ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">All-in avg: ${fmt(sig.avgAI)} · Min all-in: ${fmt(sig.minAI)} · Ticketmaster now: ${fmt(sig.tmPrice)}</p>` : ''}
       </div>
@@ -912,7 +928,7 @@ function renderSignals(snaps, config, fv) {
     <div class="signal ${signalClass[sig.sellSignal]||'wait'}">
       <div class="signal-icon">${signalIcon[sig.sellSignal]||'⚪'}</div>
       <div class="signal-body">
-        <h4>${sig.sellSignal === 'sell' ? '💰 Good Time to Sell' : sig.sellSignal === 'watch' ? '👀 Hold — Watch Momentum' : '⏳ Wait to Sell'}</h4>
+        <h4>${sig.sellSignal === 'complete' ? '🏁 Festival Complete' : sig.sellSignal === 'sell' ? '💰 Good Time to Sell' : sig.sellSignal === 'watch' ? '👀 Hold — Watch Momentum' : '⏳ Wait to Sell'}</h4>
         <p>${sig.sellReason || 'Insufficient data'}</p>
         ${sig.momentum !== undefined ? `<p style="margin-top:8px;font-size:12px;color:var(--text4)">Price momentum: ${sig.momentum} · ${sig.daysTo} days to festival</p>` : ''}
       </div>
