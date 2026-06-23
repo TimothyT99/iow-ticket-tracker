@@ -316,19 +316,39 @@ async function main() {
   const events = JSON.parse(fs.readFileSync(EVENTS_FILE, 'utf8'));
   const snapsData = JSON.parse(fs.readFileSync(SNAPS_FILE, 'utf8'));
 
-  // Determine which year to scrape
-  const currentYear  = new Date().getFullYear().toString();
-  const year         = targetYear || currentYear;
-  const eventConfig  = events.years[year];
+  // Determine which year to scrape.
+  // Pick the soonest festival that is (a) configured with a twicketsUrl and
+  // (b) not yet past, ignoring the calendar year (BACKLOG #6). The old logic
+  // used new Date().getFullYear(), which kept targeting a finished festival
+  // post-event (→ scrape a dead/empty page → fail every run) and would never
+  // advance to next year until January. A specific --year still overrides.
+  const today = isoDate();
+  let year = targetYear;
+  if (!year) {
+    const candidates = Object.keys(events.years)
+      .filter(y => events.years[y] && events.years[y].twicketsUrl)      // must be on sale / configured
+      .map(y => ({ y, d: daysBetween(today, events.years[y].festival.date) }))
+      .filter(c => c.d >= 0 && c.d <= 730)                              // upcoming, within 2 years
+      .sort((a, b) => a.d - b.d);                                       // soonest first
+    if (candidates.length === 0) {
+      log('Off-season: no configured festival is currently upcoming (all past or not yet on sale). Nothing to scrape — exiting cleanly.');
+      process.exit(0);
+    }
+    year = candidates[0].y;
+  }
+  const eventConfig = events.years[year];
 
   if (!eventConfig) {
     throw new Error(`No config found for year ${year}. Add it to public/data/events.json.`);
   }
+  if (!eventConfig.twicketsUrl) {
+    log(`Festival ${year} has no twicketsUrl configured yet (not on sale). Nothing to scrape — exiting cleanly.`);
+    process.exit(0);
+  }
 
-  const today       = isoDate();
   const daysToFest  = daysBetween(today, eventConfig.festival.date);
 
-  // Don't scrape if festival is in the past or more than 2 years away
+  // Defensive guards (mainly for an explicit --year): skip past / too-distant festivals.
   if (daysToFest < -7) {
     log(`Festival ${year} is in the past (${daysToFest}d ago). Nothing to scrape.`);
     process.exit(0);
