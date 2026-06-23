@@ -19,6 +19,12 @@ Five days after the festival the site was effectively broken and the pipeline wa
 - **Scheduled tasks kept running post-festival** (daily health-check + 4×/day TM price check) — both tied to the finished 2026 event, both failing on the withdrawn Fable model and the health-check about to false-alarm 🚨 daily (it expects 50+ commits/day). *Fixed:* both disabled; recreate fresh (on the current model) when 2027 opens.
 - **Data:** backed up canonical snapshots (2243) + events.json before any change; no data files were touched.
 
+**Follow-up shipped same day — data-quality cleanup + classifier hardening:**
+- Found ~2,573 listings misclassified as `camping`: campervan-pitch passes (up to £527), and multi-item lots priced as one total ("1× Car, 1× Weekend camping" £143.75; adult+infant lots; a £58 "facilities" pass). They had crushed the floor (season floor read £67 instead of £227) and inflated the average.
+- **Classifier hardened** (scraper + dashboard): added `campervan`/`infant`/`nature calls`/`facilities` exclusions + a **£168 price-plausibility floor**. Dashboard also guards a stored `type:"excluded"` flag and applies the floor at read time. 11/11 unit tests pass (keeps legit £170 ticket and "camping + car park" qty1; drops all bundles/passes).
+- **Historical data cleaned:** 2,573 listings re-tagged `type:"excluded"` in both `data/` and `public/data/` snapshots, summaries recomputed; raw price/tier/qty preserved for audit. Backed up first (`iow-tracker-backups/2026-06-23-precleanup/`). 2026 commentary updated to clean figures.
+- *Known follow-up:* a few non-camping tiers truncated to "no campin" (missing the 'g') still classify as camping; and `inferredSold[]` still includes the excluded bundles. Minor; candidates for a future pass.
+
 **Meta-learning:** the cutover from *live tracking* → *historical archive* was entirely manual and got missed, so a healthy-looking system rotted quietly for days. The lifecycle below makes that cutover explicit, and the code now degrades gracefully (festival-complete UI state; off-season scraper exits 0) so a missed manual step no longer means failure spam. Worth adding the stale-data canary (Seq 2 #9) so the *next* silent failure pings us within hours.
 
 ---
