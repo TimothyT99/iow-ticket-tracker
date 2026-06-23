@@ -124,8 +124,23 @@ async function scrape(eventConfig) {
       log('No cookie banner found (or already dismissed)');
     }
 
-    // Wait for listings to load
-    await page.waitForSelector('#tws_ticket-list > li', { timeout: 15000 });
+    // Wait for the listings CONTAINER first — it renders even when the market is empty.
+    // Waiting for `#tws_ticket-list > li` directly times out on a genuinely empty market
+    // and gets misread as a scrape failure (BACKLOG #7). Distinguish the two cases:
+    //   • container present, no <li>  → empty market → return [] (writes a marketEmpty snapshot)
+    //   • container never appears      → DOM unrecognised / event gone → throw (fail loudly)
+    try {
+      await page.waitForSelector('#tws_ticket-list', { timeout: 15000 });
+    } catch {
+      throw new Error('Listings container #tws_ticket-list not found — Twickets DOM may have changed or the event page is unavailable.');
+    }
+    const hasListings = await page.waitForSelector('#tws_ticket-list > li', { timeout: 5000 })
+      .then(() => true).catch(() => false);
+    if (!hasListings) {
+      log('Listings container present but empty — no tickets on sale right now (marketEmpty).');
+      await browser.close();
+      return [];
+    }
     log('Listings loaded');
 
     // Click "Show more" until all listings are visible
