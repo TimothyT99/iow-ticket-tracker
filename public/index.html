@@ -213,12 +213,14 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     </div>
 
     <div class="info">
-      <!-- AUTO-COMMENTARY:trends START — refreshed by the daily tracker job; do not hand-edit between markers -->
-      <strong>2026 observed (our data, 27 Apr →):</strong> avg camping all-in peaked ~£419 (26 May),
-      eased through early June and now sits ~£348 — down ~10% on a week ago (~£386).
-      Six days out, the hypothesised final-week price rise is <em>not yet visible</em>: the avg has been flat since the 7-day mark.
-      Cheap listings still go fast — 80% of disappearing listings vanished the same day.
-      Full evidence and rationale: <strong>Setup tab</strong>.
+      <!-- AUTO-COMMENTARY:trends START — final 2026 retrospective (season complete) -->
+      <strong>2026 final retrospective (full season, 27 Apr – 18 Jun):</strong>
+      Camping all-in resale peaked ~£425 in late May — just after the 15 May sell-out — then <em>softened</em> into the festival,
+      averaging the high-£340s in the final week (~18% below the peak).
+      The much-talked-about final-week price spike never arrived: the average stayed roughly flat and only ticked up on the eve
+      (17 Jun, ~£361) as supply collapsed. The cheapest window in 2026 was the <strong>final 1–2 weeks</strong>
+      (clean single-ticket floors ~£225–255 all-in), not the usual "4–6 weeks out" — but you had to move fast: 87% of listings that
+      vanished did so the same day. Full evidence: <strong>Setup tab</strong>.
       <!-- AUTO-COMMENTARY:trends END -->
     </div>
   </div>
@@ -281,72 +283,77 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
 
   <!-- ═══════ SETUP ═══════ -->
   <div id="tab-setup" class="tab-panel">
-    <div class="sec-title">How It Works</div>
+    <div class="sec-title">FAQ</div>
     <div class="card card-p" style="font-size:13px;line-height:1.8;color:var(--text2)">
-      <p><strong style="color:var(--blue)">Architecture</strong><br>
-      GitHub Actions runs the Playwright scraper hourly during UK hours (06:00–22:00 UTC = 07:00–23:00 BST)
-      in peak season (Mar–Jun), and once daily in the off-season. Each run commits new data to
-      <code>data/snapshots.json</code>, which triggers a Netlify rebuild automatically.</p><br>
+      <p><strong style="color:var(--blue)">What do the prices on this site mean?</strong><br>
+      Every price shown is an <strong>all-in estimate</strong> — the seller's asking price plus the ~15.9% Twickets buyer fee added
+      at checkout. That makes resale prices directly comparable to a face-value purchase, where fees are usually bundled in.</p><br>
 
-      <p><strong style="color:var(--blue)">Running a manual scrape</strong><br>
-      Go to your GitHub repo → Actions → "Scrape Twickets Ticket Prices" → Run workflow.
-      Or locally: <code>cd scraper && npm install && npx playwright install chromium && node scrape.js</code></p><br>
+      <p><strong style="color:var(--blue)">What's the difference between camping and non-camping tickets?</strong><br>
+      None, for access — both are full weekend tickets with the same face value and the same Thursday–Sunday entry. The only
+      difference is whether you get an on-site campsite pitch. On resale the two can drift apart in price (sellers often list
+      non-camping a little cheaper), so both are tracked and badged separately. The headline stats and signals use
+      <strong>camping</strong> tickets as the primary series.</p><br>
 
-      <p><strong style="color:var(--blue)">Adding IoW 2027</strong><br>
-      When 2027 tickets go on sale, go to Twickets, find the event page, and copy the event ID from the URL
-      (the long number after <code>/event/</code>). Add it to <code>public/data/events.json</code> under the
-      <code>2027</code> key along with the face value. The scraper will automatically start collecting
-      2027 data from the next run.</p><br>
+      <p><strong style="color:var(--blue)">What does "likely sold" mean on the Sold tab?</strong><br>
+      Twickets doesn't tell us when a ticket sells, so we infer it: when a listing that was there one snapshot is gone the next, it's
+      logged as a disappearance. If it vanished at or below the Ticketmaster price it's flagged <strong>likely sold</strong>; if it
+      was priced higher, it was more likely <strong>withdrawn or relisted</strong>. It's an estimate, not a confirmed sale — in
+      2026 only about a third of disappearances were at plausible sale prices.</p><br>
 
-      <p><strong style="color:var(--blue)">Updating announcement dates</strong><br>
-      Edit <code>public/data/events.json</code> and update the <code>announcements</code> array with confirmed dates
-      and a brief description of who was announced. These appear as markers on the trend chart.</p><br>
+      <p><strong style="color:var(--blue)">How fresh is the data?</strong><br>
+      In the run-up to a festival the resale market is checked roughly every 15 minutes during UK waking hours, and the dashboard
+      updates automatically. Between festivals it idles — when there's no event on sale you'll see a "not on sale yet" note, and
+      tracking restarts on its own once the next year's tickets appear.</p><br>
 
-      <p><strong style="color:var(--blue)">Camping vs non-camping tickets</strong><br>
-      Ticketmaster sells <strong>Camping</strong> and <strong>Non-Camping</strong> weekend tickets at the
-      <em>same face value</em> — the split is a capacity planning mechanism so they can manage campsite
-      numbers, not a difference in festival access (both give full access Thursday–Sunday).
-      However, on resale the two types behave differently: sellers often list non-camping tickets cheaper
-      (assuming lower demand) and some buyers actively seek them out at a discount if they have camping
-      sorted elsewhere. This psychological price gap is real even though the underlying product is the same.
-      Both types are captured, tagged, and shown separately so the divergence is visible over time.
-      Stats, signals, and the primary trend line use camping tickets; non-camping is a lighter secondary
-      series on the trends chart and badged in all tables.</p><br>
+      <p><strong style="color:var(--blue)">Twickets vs "Ticketmaster Verified Resale" — what's the difference?</strong><br>
+      They're two separate resale routes. <strong>Twickets</strong> is what this site monitors automatically (every listing, all day).
+      <strong>Ticketmaster Verified Resale</strong> opened later in 2026 and is sampled by hand now and then — shown as occasional
+      points on the trend chart so you can compare the two.</p><br>
 
-      <p><strong style="color:var(--blue)">Fingerprinting &amp; sold inference</strong><br>
-      Listing IDs are not exposed by Twickets, so each listing is identified by <code>price|qty|tier</code>.
-      When a fingerprint disappears between snapshots it's logged as inferred sold.
-      Unique fingerprints give high-confidence signals. Listings marked "Accepting Offers" that
-      disappear likely sold below asking. Listings that disappear above Ticketmaster all-in price are
-      more likely removed/relisted than genuinely sold — the outcome column in the Sold log flags this.</p><br>
+      <p><strong style="color:var(--blue)">Why does it keep several years?</strong><br>
+      So each season can be compared against the last. Pick a year from the selector at the top right; completed seasons (like 2026)
+      stay fully browsable as historical archives, and the long-term aim is to use past curves to read the current market.</p><br>
 
-      <p><strong style="color:var(--blue)">Scrape frequency strategy</strong><br>
-      Every 15 minutes during UK waking hours (07:00–23:00 BST) in peak season, triggered by
-      cron-job.org → GitHub <code>workflow_dispatch</code>. GitHub Actions hourly schedule acts as
-      fallback. Off-season: once daily. Trigger a manual run anytime from the GitHub Actions tab.</p>
+      <p style="color:var(--text3);font-size:12px;border-top:1px solid var(--border,#21262d);padding-top:12px">
+      <strong>Behind the scenes (for the maintainer):</strong> a Playwright scraper on GitHub Actions captures Twickets listings,
+      commits them to JSON, and Netlify rebuilds the site automatically. To add a new year, drop its Twickets event ID + face values
+      into <code>public/data/events.json</code> and tracking begins on the next run. Full setup, scheduling and data-format notes live
+      in the repo's <code>README.md</code>.</p>
     </div>
 
     <div class="sec-title">Commentary &amp; Evidence</div>
     <div class="card card-p" style="font-size:13px;line-height:1.8;color:var(--text2)">
-      <!-- AUTO-COMMENTARY:setup START — refreshed by the daily tracker job; do not hand-edit between markers -->
-      <p><strong style="color:var(--blue)">How commentary on this site works</strong><br>
-      Claims on the data tabs are kept short and limited to what our own snapshot data supports.
-      Anything not yet observable in the data is explicitly labelled a <em>hypothesis</em>. The working is below.
-      Source: our snapshots, 27 Apr 2026 onwards, every 15 minutes during UK hours. Last refreshed 12 Jun 2026 (6 days to festival).</p><br>
+      <!-- AUTO-COMMENTARY:setup START — final 2026 retrospective (season complete) -->
+      <p><strong style="color:var(--blue)">About this commentary</strong><br>
+      This is the <strong>final 2026 retrospective</strong>, computed from the complete season — 2,243 snapshots, 27 Apr to 18 Jun 2026,
+      captured every 15 minutes during UK hours. Every claim below is drawn from that data; the "hypothesis" labels carried during the
+      season have now been settled.</p><br>
 
-      <p><strong style="color:var(--green)">Observed in 2026 data</strong><br>
-      • <strong>Sell-out impact (15 May):</strong> camping avg all-in rose ~£378 → ~£412 (+9%) within days; supply fell from ~28 to ~17 listings.<br>
-      • <strong>TM transfers opened (27 May):</strong> supply recovered and avg eased from its ~£419 peak (26 May) to ~£348 by 12 Jun — about 10% below a week earlier (~£386).<br>
-      • <strong>Floor volatility:</strong> the daily cheapest camping all-in ranged £227–£360 across the final month. The cheapest floors (£227–£240) appeared 7–16 days out — not in the often-cited 4–6 week window.<br>
-      • <strong>Speed:</strong> 80% of listings that disappeared (208 of 260) vanished the same day they were last seen. Cheap listings do not wait for you.<br>
-      • <strong>Disappearance ≠ sale:</strong> only ~32% of disappearances (83 of 260) were priced ≤ £320 all-in (plausible sales); the rest were more likely removed or relisted.<br>
-      • <strong>Supply:</strong> 13 camping listings as of 12 Jun, in line with the 7-day average (~12).<br>
-      • <strong>Non-camping:</strong> mixed evidence. The non-camping floor was the cheapest ticket listed on 12 of 31 days (as low as £213 all-in), but right now camping is cheaper (£253 vs £279 floor) and the non-camping <em>average</em> (~£372) sits above camping (~£348).</p><br>
+      <p><strong style="color:var(--green)">What the 2026 data showed</strong><br>
+      • <strong>Prices fell into the festival — they didn't spike.</strong> Camping avg all-in peaked ~£425 in late May (just after the
+      15 May sell-out, around TM transfers opening 27 May), then eased to the high-£340s in the final week: roughly £410 at 3–4 weeks
+      out vs ~£348 in the last week.<br>
+      • <strong>The cheapest window was the final 1–2 weeks.</strong> Median daily floor was ~£233 all-in inside the last 7 days, vs
+      ~£305–320 at 15–45 days out. The conventional "buy 4–6 weeks out" did <em>not</em> hold — later was cheaper.<br>
+      • <strong>But cheap meant fast.</strong> 87% of listings that disappeared (405 of 463) vanished the same day they were last seen.
+      Clean single-ticket floors bottomed around £225–255 all-in.<br>
+      • <strong>"Cheap" can mislead — check what's included.</strong> A handful of sub-£170 "camping" listings were actually
+      car+camping bundles or campervan / facilities passes (e.g. "1× Car, 1× Weekend camping"), not standalone weekend tickets.<br>
+      • <strong>Disappearance ≠ sale.</strong> Only ~38% of disappearances (175 of 463) were priced ≤ £320 all-in (plausible sale
+      prices); the rest were more likely withdrawn or relisted.<br>
+      • <strong>Supply dried up sharply at the end.</strong> Camping listings peaked at 28 (13 May), fell to 13 by 11 Jun and 9 on the
+      eve, and reached 0 on festival day — only a few non-camping leftovers (£217–£345 all-in) remained.<br>
+      • <strong>Non-camping ≈ camping overall.</strong> Season averages were near-identical (camping ~£386, non-camping ~£382), and the
+      non-camping floor was the cheapest ticket on 41% of days. No consistent non-camping discount emerged.</p><br>
 
-      <p><strong style="color:var(--yellow)">Hypotheses — stated as such on the data tabs</strong><br>
-      • <strong>Lineup announcement spikes (+10–20% for 2–3 weeks):</strong> from general UK festival resale patterns; our 2026 data starts after both announcements. To be tested against 2027.<br>
-      • <strong>Final-week price peak:</strong> now being tested live. Two days into the final week (d-7, d-6) the avg is flat at ~£348 and below last week's ~£386 — no rise visible yet. The remaining days will settle this.<br>
-      • <strong>"Best buy window is 4–6 weeks out":</strong> partially contradicted in 2026 — see floor volatility above.</p>
+      <p><strong style="color:var(--yellow)">Hypotheses — now settled by the full season</strong><br>
+      • <strong>Final-week price peak — not supported.</strong> Prices were flat-to-softer in the final week; the only uptick was the
+      eve of the festival as supply collapsed, not a genuine demand spike.<br>
+      • <strong>"Best buy window is 4–6 weeks out" — contradicted.</strong> In 2026 both the floor and the average were lowest in the
+      final 1–2 weeks.<br>
+      • <strong>Lineup-announcement spikes — still untested.</strong> Our data began after both 2026 announcements; carried over to
+      test against 2027.</p>
       <!-- AUTO-COMMENTARY:setup END -->
     </div>
 
@@ -663,16 +670,38 @@ function renderMarket(snaps, latest, fv) {
   const tmResaleNote = latestTMResale
     ? ` · <strong style="color:var(--yellow)">TM Verified Resale:</strong> last sampled ${latestTMResale.date} — ${latestTMResale.allInGBP ? fmt(latestTMResale.allInGBP) + ' all-in' : fmt(latestTMResale.basePriceGBP) + ' base (fees unconfirmed)'} (manually checked)`
     : '';
-  info.innerHTML = `<strong>Twickets</strong> snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${campListings.length}</strong> camping + <strong>${ncListings.length}</strong> non-camping listings · All-in estimates include ~15.9% Twickets fee${tmResaleNote}`;
+  const todayISO = new Date().toISOString().split('T')[0];
+  const seasonOver = (config?.festival?.date || '') < todayISO;
+  if (seasonOver) {
+    // Completed season → show a computed summary, and frame the cards below as the FINAL snapshot
+    const byDate = {};
+    snaps.forEach(s => { byDate[s.date.slice(0, 10)] = s; });
+    const daily = Object.values(byDate).map(s => {
+      const cl = (s.listings || []).filter(l => listingType(l) === 'camping');
+      const st = computeStats(cl, fv);
+      return { date: s.date.slice(0, 10), days: s.daysToFestival, avg: st.avg != null ? allIn(st.avg) : null, count: cl.length };
+    });
+    const withAvg = daily.filter(d => d.avg != null);
+    const peak = withAvg.length ? withAvg.reduce((a, b) => (b.avg > a.avg ? b : a)) : null;
+    const finalWk = withAvg.filter(d => d.days != null && d.days >= 0 && d.days <= 7);
+    const finalWkAvg = finalWk.length ? Math.round(finalWk.reduce((s, d) => s + d.avg, 0) / finalWk.length) : null;
+    const peakSupply = daily.length ? Math.max(...daily.map(d => d.count)) : 0;
+    const summary = peak
+      ? `Camping all-in peaked <strong>${fmtS(peak.avg)}</strong> (${peak.date}) and averaged <strong>${finalWkAvg != null ? fmtS(finalWkAvg) : '—'}</strong> in the final week; peak supply ${peakSupply} camping listings.`
+      : `Full price history is preserved in the tabs below.`;
+    info.innerHTML = `🏁 <strong>${activeYear} season complete</strong> — tracked ${daily.length} days, ${snaps.length} snapshots. ${summary}
+      <span style="color:var(--text3);display:block;margin-top:6px">The stats and table below are the <strong>final snapshot</strong> (${latest.date}, festival day): camping resale had cleared, leaving ${ncListings.length} non-camping listing${ncListings.length === 1 ? '' : 's'}. Full analysis in the <strong>Setup</strong> tab.</span>`;
+  } else {
+    info.innerHTML = `<strong>Twickets</strong> snapshot: <strong>${latest.date}</strong> · ${latest.daysToFestival} days before festival · <strong>${campListings.length}</strong> camping + <strong>${ncListings.length}</strong> non-camping listings · All-in estimates include ~15.9% Twickets fee${tmResaleNote}`;
+  }
 
   // Camping/non-camping explainer
   const campFV = config?.faceValues?.adult_camping || 368;
   const marketInfoEl = document.getElementById('marketTypeInfo');
   if (marketInfoEl) {
     marketInfoEl.innerHTML = `<strong>ℹ️ Camping vs non-camping:</strong> same face value (${fmt(campFV)}), same Thu–Sun access — only the campsite differs.
-      2026 resale evidence is <strong>mixed</strong>: the non-camping <em>floor</em> is often the cheapest ticket listed,
-      but the non-camping <em>average</em> hasn't stayed below camping. Stats and signals use camping (primary series);
-      rationale in the Setup tab.`;
+      In 2026 the evidence was <strong>mixed</strong>: the non-camping floor was the cheapest ticket on 41% of days, but the season
+      averages ended up near-identical (camping ~£386, non-camping ~£382). Stats and signals use camping (primary series); full rationale in the Setup tab.`;
   }
 
   // Stats — camping only
