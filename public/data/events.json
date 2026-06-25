@@ -105,6 +105,17 @@
           },
           "notes": "Twickets resale ticket. Listing £223, offer £210 accepted. Twickets buyer fee £33.45 added at checkout (confirmed all-in: £243.45). Despite offer negotiation, ended up £12.10 more than early bird (£231.35). Purchased 59 days before festival."
         }
+      },
+      "2027": {
+        "purchaseDate": "2026-06-25",
+        "ticketTypes": {
+          "tier1_presale_early_bird": {
+            "faceValue": 259.0,
+            "qty": 1
+          }
+        },
+        "orderTotal": 259.0,
+        "notes": "Tier 1 Pre Sale early bird, bought on on-sale day (25 Jun 2026) at £259 all-in (incl. booking fees), ~12 months before the 2027 festival. Ticket type (camping vs non-camping) to confirm. 2027 standard/face value not yet recorded."
       }
     }
   },
@@ -293,6 +304,13 @@
       "primaryTier": "adult_camping",
       "announcements": [
         {
+          "date": "2026-06-25",
+          "type": "onsale",
+          "label": "Early bird on sale",
+          "description": "2027 early-bird / Tier 1 pre-sale tickets went on sale",
+          "confirmed": true
+        },
+        {
           "date": "2026-10-01",
           "type": "lineup_1",
           "label": "Lineup 1",
@@ -307,7 +325,10 @@
           "confirmed": false
         }
       ],
-      "notes": "Update twicketsEventId and faceValues as soon as 2027 tickets go on sale. Find the event ID from the Twickets URL for the event page."
+      "notes": "Owner early bird recorded 25 Jun 2026 (£259 all-in, Tier 1 Pre Sale). Still to do: add Twickets resale event ID/URL to start resale tracking, and record the 2027 standard face value once known.",
+      "baselines": {
+        "ownerEarlyBird": 259.0
+      }
     }
   }
 }
