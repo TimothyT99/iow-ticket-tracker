@@ -109,13 +109,14 @@
       "2027": {
         "purchaseDate": "2026-06-25",
         "ticketTypes": {
-          "tier1_presale_early_bird": {
+          "tier1_presale_early_bird_camping": {
             "faceValue": 259.0,
-            "qty": 1
+            "qty": 1,
+            "type": "camping"
           }
         },
         "orderTotal": 259.0,
-        "notes": "Tier 1 Pre Sale early bird, bought on on-sale day (25 Jun 2026) at £259 all-in (incl. booking fees), ~12 months before the 2027 festival. Ticket type (camping vs non-camping) to confirm. 2027 standard/face value not yet recorded."
+        "notes": "Tier 1 Pre Sale early bird (camping), bought on on-sale day (25 Jun 2026) at £259 all-in (incl. booking fees), ~12 months before the 2027 festival. Camping vs non-camping is a capacity indicator only — same face price — though it can still affect resale prices. 2027 standard/face value not yet recorded."
       }
     }
   },
