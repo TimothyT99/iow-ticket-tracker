@@ -323,8 +323,23 @@ re-enabling — that binds them to the current model. Point them at the new year
 the Token RTF for the expiry, and BACKLOG Seq 2 #8 to move to a 1-year fine-grained token).
 
 **⑤ As the season runs:** when a lineup is announced, set the matching entry in
-`years.YYYY.announcements` to `"confirmed": true` with the real date; record any standard-price tier
-changes; keep `baselines.ticketmasterCurrent` current.
+`years.YYYY.announcements` to `"confirmed": true` with the real date; keep `baselines.ticketmasterCurrent` current.
+
+**Logging primary / pre-sale prices** (the "🎟️ Primary / Pre-Sale Pricing" table on the upcoming-year
+Market tab) — add a row to `years.YYYY.primaryPriceHistory[]` each time a phase opens, sells out, or its
+price changes:
+
+```jsonc
+"primaryPriceHistory": [
+  { "date": "2026-06-25", "tier": "Tier 1 Pre-Sale (early bird, camping)",
+    "allIn": 259,                       // price incl. fees; or use "listPrice" for the pre-fee figure
+    "status": "on_sale",                // on_sale | sold_out | increased | closed | upcoming
+    "note": "Pre-sale opened; owner bought 1× camping at £259 all-in." }
+]
+```
+
+The table shows automatically for any year that has at least one row. *(A future option to populate this
+automatically is logged in BACKLOG #15b.)*
 
 **What happens automatically (no action needed):**
 - The dashboard **defaults to the soonest upcoming year** and tags finished ones "— complete".
