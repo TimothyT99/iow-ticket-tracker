@@ -168,6 +168,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
   <div id="tab-market" class="tab-panel active">
     <div id="snapshotInfo" class="info"></div>
     <div id="marketTypeInfo" class="info amber" style="margin-top:-8px;margin-bottom:20px"></div>
+    <div id="preSaleSection" style="display:none;margin-bottom:20px"></div>
 
     <div class="stats-grid" id="statsGrid"></div>
 
@@ -665,17 +666,56 @@ function renderAll() {
   renderSetup(snaps, fv);
 }
 
+// ── PRIMARY / PRE-SALE PRICING ──────────────────────────────────────────────
+// Manually-recorded primary-market (Ticketmaster/See Tickets) pricing phases for a year —
+// the "left-hand side" the Twickets resale scraper can't see (early bird → tiers → standard → sold out).
+// Source: config.primaryPriceHistory[] = [{ date, tier, allIn?, listPrice?, status, note }].
+function preSaleStatusBadge(s) {
+  const map = { on_sale:['b-green','On sale'], sold_out:['b-purple','Sold out'], upcoming:['b-grey','Upcoming'],
+                closed:['b-grey','Closed'], increased:['b-yellow','Price ↑'] };
+  const [c, l] = map[s] || ['b-blue', s || '—'];
+  return `<span class="badge ${c}">${l}</span>`;
+}
+function renderPreSale(config) {
+  const el = document.getElementById('preSaleSection');
+  if (!el) return;
+  const hist = (config?.primaryPriceHistory || []).slice().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  if (!hist.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  const rows = hist.map(h => {
+    const price = h.allIn != null    ? `<strong>${fmt(h.allIn)}</strong> <span style="color:var(--text3);font-size:11px">all-in</span>`
+                : h.listPrice != null ? `${fmt(h.listPrice)} <span style="color:var(--text3);font-size:11px">list</span>`
+                : '—';
+    return `<tr>
+      <td><strong>${h.date || '—'}</strong></td>
+      <td>${h.tier || '—'}</td>
+      <td>${price}</td>
+      <td>${preSaleStatusBadge(h.status)}</td>
+      <td class="hide-mob" style="color:var(--text3);font-size:12px">${h.note || ''}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="sec-title">🎟️ Primary / Pre-Sale Pricing — ${activeYear}</div>
+    <div class="card"><table>
+      <thead><tr><th>Date</th><th>Phase / Tier</th><th>Price</th><th>Status</th><th class="hide-mob">Notes</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="info" style="margin-top:8px;font-size:12px;color:var(--text3)">Official primary-market prices (Ticketmaster / See Tickets), recorded by hand as each phase releases — the early data the Twickets <em>resale</em> tracker can't see until the resale event opens.</div>`;
+}
+
 // ── MARKET NOW ─────────────────────────────────────────────────────────────
 function renderMarket(snaps, latest, fv) {
+  const config = getEventConfig();
+  renderPreSale(config);
   const info = document.getElementById('snapshotInfo');
   if (!latest) {
-    const cfg = getEventConfig();
-    info.innerHTML = (cfg && !cfg.twicketsEventId)
-      ? `📅 <strong>${activeYear} isn't on sale yet.</strong> Resale tracking starts automatically once ${activeYear} tickets go on sale and the Twickets event opens — there's no ${activeYear} market data to show yet. Use the year selector above to view a completed season.`
+    const eb = EVENTS.historicalBaselines?.years?.[activeYear];
+    const presaleLive = (config?.primaryPriceHistory || []).length || eb;
+    info.innerHTML = (config && !config.twicketsEventId)
+      ? `📅 <strong>${activeYear} resale tracking hasn't started yet.</strong> `
+        + (presaleLive ? `Primary tickets are on sale — see the pre-sale pricing below${eb ? `, and the early-bird we bought under <strong>Likely Sold → Reference Purchases</strong>` : ''}. ` : '')
+        + `This tab tracks the <strong>Twickets resale</strong> market, which only opens once people have tickets to resell; it'll start collecting automatically when the ${activeYear} Twickets event goes live. Switch year above for a completed season.`
       : 'No snapshots yet. Run the scraper to start collecting data.';
     return;
   }
-  const config       = getEventConfig();
   const tmPrice      = config?.baselines?.ticketmasterCurrent || 320;
   const campListings = latest.listings.filter(l => listingType(l) === 'camping');
   const ncListings   = latest.listings.filter(l => listingType(l) === 'non_camping');
