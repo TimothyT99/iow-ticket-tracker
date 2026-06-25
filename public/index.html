@@ -138,7 +138,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
   <div class="logo">IoW</div>
   <div class="header-text">
     <h1>Isle of Wight Festival — Ticket Price Tracker</h1>
-    <p>Twickets resale: auto-monitored every 15 min · Ticketmaster Verified Resale: manually sampled · GitHub Actions</p>
+    <p>Twickets resale tracker · Ticketmaster Verified Resale sampled manually · auto-collected via GitHub Actions + Netlify</p>
   </div>
   <div class="header-right">
     <select class="year-select" id="yearSelect" onchange="setYear(this.value)"></select>
@@ -234,7 +234,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
       <canvas id="signalChart" style="max-height:300px"></canvas>
     </div>
 
-    <div class="sec-title">Upcoming Key Dates</div>
+    <div class="sec-title">Key Dates</div>
     <div class="card">
       <table>
         <thead><tr><th>Date</th><th>Event</th><th>Typical Price Impact</th><th>Days Away</th></tr></thead>
@@ -246,7 +246,7 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
   <!-- ═══════ LIKELY SOLD ═══════ -->
   <div id="tab-sold" class="tab-panel">
     <div class="info green" style="margin-bottom:12px">
-      <strong>📋 Our Reference Purchases</strong> — confirmed prices paid for our own 2026 tickets.
+      <strong>📋 Our Reference Purchases</strong> — confirmed prices we've paid for our own tickets, per selected year.
       These anchor what counts as a good resale deal vs the early-bird baseline.
     </div>
     <div class="card">
@@ -259,8 +259,8 @@ code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 
     <div class="info" style="margin-top:20px">
       <strong>Inferred Sold (scraper):</strong> Each snapshot fingerprints listings as <code>price|qty|tier</code>.
       When a fingerprint disappears between snapshots it's logged as <em>likely sold</em> or <em>removed/relisted</em>.
-      <strong>Likely sold</strong> = all-in price ≤ Ticketmaster (£320) — a plausible sale price.
-      <strong>Removed?</strong> = all-in above Ticketmaster — seller likely withdrew or relisted cheaper.
+      <strong>Likely sold</strong> = all-in at or below the Ticketmaster price — a plausible sale price.
+      <strong>Removed?</strong> = all-in above it — seller likely withdrew or relisted cheaper.
       High confidence = unique fingerprint. Low confidence = fingerprint appeared multiple times (ambiguous).
       Both camping and non-camping disappearances are tracked here; the Tier column identifies the type.
     </div>
@@ -551,7 +551,7 @@ function computeSignal(snaps, eventConfig) {
 
   let buySignal, buyReason;
   if (daysTo < 7) {
-    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance to buy. Act fast on anything cheap: in 2026, 82% of disappearing listings vanished the same day.`;
+    buySignal = 'urgent'; buyReason = `Only ${daysTo} days to festival — last chance to buy. Act fast on anything cheap: in 2026, 87% of disappearing listings vanished the same day.`;
   } else if (nearAnn && daysBetween(today, nearAnn.date) > 0) {
     buySignal = 'wait'; buyReason = `${nearAnn.label} in ${daysBetween(today, nearAnn.date)} days — prices may spike. Consider waiting until after.`;
   } else if (soldOut) {
@@ -563,11 +563,11 @@ function computeSignal(snaps, eventConfig) {
     if (minAI < avgAI * 0.88 && momentum !== 'rising') {
       buySignal = 'buy'; buyReason = `Festival sold out — Twickets only. Cheapest all-in ${fmt(minAI)} is ${Math.round(savingVsAvg/avgAI*100)}% below the current market avg (${fmt(avgAI)}) with ${daysTo} days to go.${offerNote}`;
     } else if (daysTo <= 21) {
-      buySignal = 'buy'; buyReason = `${daysTo} days to festival and sold out — don't wait. Floor is ${fmt(minAI)} all-in and volatile (£227–£360 since mid-May); cheap listings vanish within hours.${offerNote}`;
+      buySignal = 'buy'; buyReason = `${daysTo} days to festival and sold out — don't wait. Floor is ${fmt(minAI)} all-in and volatile; cheap listings can vanish within hours.${offerNote}`;
     } else if (momentum === 'rising') {
       buySignal = 'watch'; buyReason = `Prices rising post sell-out. Floor ${fmt(minAI)} all-in, avg ${fmt(avgAI)}. Act if a cheap listing appears — don't wait for a sustained dip.${offerNote}`;
     } else {
-      buySignal = 'watch'; buyReason = `Market stable post sell-out. Floor ${fmt(minAI)}, avg ${fmt(avgAI)} all-in. Watch for cheap listings and act fast — most vanish same-day. A final-week rise is a hypothesis, not yet seen in 2026 data.${offerNote}`;
+      buySignal = 'watch'; buyReason = `Market stable post sell-out. Floor ${fmt(minAI)}, avg ${fmt(avgAI)} all-in. Watch for cheap listings and act fast — most vanish same-day. (A final-week price rise didn't materialise in 2026.)${offerNote}`;
     }
   } else {
     // Pre sell-out: compare vs Ticketmaster as the alternative
@@ -590,7 +590,7 @@ function computeSignal(snaps, eventConfig) {
   if (nearAnn && daysBetween(today, nearAnn.date) <= 7 && daysBetween(today, nearAnn.date) >= -3) {
     sellSignal = 'sell'; sellReason = `${nearAnn.label} announcement imminent — typically a demand spike (hypothesis from UK festival patterns, untested in our data). Strong listing window.`;
   } else if (daysTo <= 14) {
-    sellSignal = 'sell'; sellReason = `Final 2 weeks — list now if selling. Demand is real (82% of 2026 disappearances were same-day), but price expectations should be realistic: avg eased after TM transfers added supply.`;
+    sellSignal = 'sell'; sellReason = `Final 2 weeks — list now if selling. Demand is real (87% of 2026 disappearances were same-day), but price expectations should be realistic: avg eased after TM transfers added supply.`;
   } else if (soldOut && daysTo <= 28) {
     sellSignal = 'sell'; sellReason = `Festival sold out and under 4 weeks away — demand is high. Good time to list if you have spares.`;
   } else if (momentum === 'rising') {
@@ -985,8 +985,8 @@ function renderSignals(snaps, config, fv) {
   const anns  = config?.announcements || [];
   const festDate = config?.festival?.date;
   const allDates = [
-    ...anns.map(a => ({ date: a.date, label: a.label + ' Announcement', impact: 'Hypothesis: short-term spike (no 2026 data — testing in 2027)', type: 'ann' })),
-    { date: festDate, label: '🎪 Festival', impact: 'Final deadline — final-week peak unproven (2026 avg eased 24 May–8 Jun)', type: 'fest' }
+    ...anns.map(a => ({ date: a.date, label: a.label + ' Announcement', impact: 'Hypothesis: lineup news may lift prices for 2–3 weeks (untested — 2026 data began after both announcements)', type: 'ann' })),
+    { date: festDate, label: '🎪 Festival', impact: 'Final deadline — in 2026 prices softened into the festival; no final-week peak', type: 'fest' }
   ].sort((a,b) => a.date.localeCompare(b.date));
 
   const kdBody = document.getElementById('keyDatesBody');
@@ -1016,7 +1016,7 @@ function renderSignals(snaps, config, fv) {
     type:'line',
     data:{ labels, datasets:[
       { label:'Avg (all-in)', data:avgs, borderColor:'#58a6ff', backgroundColor:'#58a6ff22', tension:.3, fill:true, pointRadius:5, pointBackgroundColor:'#58a6ff' },
-      { label:`Ticketmaster now (${fmt(sig.tmPrice)})`, data:snaps.map(()=>sig.tmPrice), borderColor:'rgba(255,107,53,0.7)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
+      { label:`Ticketmaster (${fmt(sig.tmPrice)})`, data:snaps.map(()=>sig.tmPrice), borderColor:'rgba(255,107,53,0.7)', tension:0, fill:false, pointRadius:0, borderDash:[8,4] },
     ]},
     options:{ ...CHART_DEFAULTS,
       plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw||0).toFixed(2)}` } } },
@@ -1033,6 +1033,9 @@ function renderSold(snaps) {
   const all      = getAllSoldInferred(snaps);
   const fv       = getEventConfig()?.faceValues?.adult_camping || 368;
   const tmPrice  = getEventConfig()?.baselines?.ticketmasterCurrent || 320;
+  // Only compare against Ticketmaster when this year actually has a standard price recorded —
+  // otherwise (e.g. a new season pre-standard-pricing) we'd compare to last year's figure.
+  const hasTM    = getEventConfig()?.baselines?.ticketmasterCurrent != null;
 
   // Reference purchases — two clean rows: Early Bird + Twickets Resale
   const confirmedTx  = (SNAPS.confirmedTransactions || []).filter(t => t.year === activeYear);
@@ -1042,6 +1045,7 @@ function renderSold(snaps) {
   confirmedBody.innerHTML = '';
 
   function tmBadge(allInPrice) {
+    if (!hasTM) return `<span class="badge b-grey">standard price TBC</span>`;
     const diff = tmPrice - allInPrice;
     if (diff > 0.5) return `<span class="badge b-green">£${diff.toFixed(2)} below TM</span>`;
     if (diff < -0.5) return `<span class="badge b-purple">£${Math.abs(diff).toFixed(2)} above TM</span>`;
@@ -1152,7 +1156,7 @@ function renderSold(snaps) {
       { label:'Likely removed/relisted (>TM)', data:inferredRemovedData, backgroundColor:'#e3b34155', borderColor:'#e3b341',   pointRadius:7, pointStyle:'rectRot' },
       { label:'✅ Confirmed sold',           data:confirmedData,       backgroundColor:'#f9ec1099', borderColor:'#f9ec10',   pointRadius:10, pointStyle:'triangle' },
       { label:'❌ Rejected offer',           data:rejectedData,        backgroundColor:'#f8514955', borderColor:'#f85149',   pointRadius:6, pointStyle:'crossRot' },
-      { label:`Ticketmaster now (${fmt(tmPrice)})`, data:[{x:200,y:tmPrice},{x:0,y:tmPrice}], type:'line', borderColor:'rgba(255,107,53,.6)', borderDash:[8,4], pointRadius:0, borderWidth:2 },
+      { label:`Ticketmaster (${fmt(tmPrice)})`, data:[{x:200,y:tmPrice},{x:0,y:tmPrice}], type:'line', borderColor:'rgba(255,107,53,.6)', borderDash:[8,4], pointRadius:0, borderWidth:2 },
     ]},
     options:{ ...CHART_DEFAULTS,
       plugins:{ ...CHART_DEFAULTS.plugins, tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: £${(ctx.raw?.y||0).toFixed(2)} @ ${ctx.raw?.x}d to festival` } } },
