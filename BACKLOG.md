@@ -156,12 +156,17 @@ all loaded by the browser on every visit and committed to git ~60×/day.
     Tim makes the purchase and shares the order confirmation; Claude updates
     `historicalBaselines` + `baselines.ownerEarlyBird`.
 
-15. 🤝 **`primaryPriceHistory[]` series — track the primary market this time**
-    2026 was resale-only by necessity. A full 2027 year includes early bird → tier
-    increases → standard → sellout on Ticketmaster. A manually updated per-year array
-    (date, tier, price) gives charts their missing left-hand side and makes
-    early-bird-vs-resale comparison automatic. Claude maintains entries; price
-    observations come from Tim or scheduled checks.
+15. ✅ **DONE 25 Jun 2026 (manual entry) — `primaryPriceHistory[]` series**
+    Shipped: per-year `primaryPriceHistory[]` in `events.json` + a "Primary / Pre-Sale Pricing"
+    table on the upcoming-year Market tab (date · tier · price · status · notes). Seeded with the
+    2027 Tier 1 pre-sale (£259 all-in, camping). **Tim updates rows manually** as each phase releases.
+    *Remaining (future):* auto-populate via a scheduled check — see #15b.
+
+15b. 🤖 **Auto pre-sale price check (future years)** — *deferred per Tim, 25 Jun 2026*
+    Scheduled task (weekly-ish during pre-sale) that opens the official IoW / Ticketmaster page,
+    reads the current on-sale tier + price, and appends/updates a `primaryPriceHistory[]` row when
+    it changes. Removes the manual upkeep. Build for 2028+ unless 2027 pre-sale runs long enough to
+    warrant it sooner.
 
 16. 🤖 **Lineup announcement watch**
     2026's `lineup_1`/`lineup_2` dates are still `confirmed: false` estimates, which
