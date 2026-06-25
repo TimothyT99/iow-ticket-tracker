@@ -272,28 +272,69 @@ Commit and push — the chart marker and announcement banner update automaticall
 If Ticketmaster changes the price (or primary sales close), update `baselines.ticketmasterCurrent`
 in `public/data/events.json`, then commit and push.
 
-### Add IoW 2027
+### Starting a new season (any year — the runbook)
 
-When 2027 tickets go on sale on Twickets:
+This is the once-a-year checklist for onboarding the next festival (2027, 2028, …). The tracker is
+built to do most of the transition automatically (see **Season lifecycle** above); the steps below are
+the bits that need a human. Do them in this order, as each trigger occurs. Replace `YYYY` with the year.
 
-1. Go to the Twickets event page
-2. Copy the event ID from the URL: `twickets.live/en/event/`**`EVENTID`**
-3. Open `public/data/events.json` and update the `2027` section:
+**First, make sure the year skeleton exists** in `public/data/events.json` under `years.YYYY` — at
+minimum a `festival.date` and `venue`. (2027 onward is usually pre-seeded; if not, copy a previous
+year's block and clear the data fields.)
 
-```json
-"2027": {
-  "twicketsEventId": "PASTE_NEW_ID_HERE",
-  "twicketsUrl": "https://www.twickets.live/en/event/PASTE_NEW_ID_HERE",
-  "faceValues": { "adult_camping": 380 },
-  "baselines": {
-    "ticketmasterCurrent": 380,
-    "ownerEarlyBird": 0,
-    "gregsResale": 0
-  }
+**① When primary tickets go on sale (early bird / pre-sale)** — record the owner purchase so it's
+never lost and shows in the dashboard's *Reference Purchases*:
+
+```jsonc
+// years.YYYY.baselines  → add:
+"baselines": { "ownerEarlyBird": 259 },          // all-in price you actually paid
+
+// historicalBaselines.years.YYYY  → add a record (mirror a previous year):
+"YYYY": {
+  "purchaseDate": "2026-06-25",
+  "ticketTypes": { "tier1_presale_early_bird_camping": { "faceValue": 259, "qty": 1, "type": "camping" } },
+  "orderTotal": 259,
+  "notes": "Tier 1 pre-sale early bird (camping), bought on on-sale day at £259 all-in."
 }
 ```
 
-4. Commit and push — the scraper picks up the new year automatically
+Optionally add an on-sale milestone to `years.YYYY.announcements`:
+`{ "date": "2026-06-25", "type": "onsale", "label": "Early bird on sale", "confirmed": true }`.
+
+**② When the Twickets resale event appears** (often a bit later — listings only exist once people have
+tickets to resell) — wire it up and the scraper auto-starts on its next run:
+
+```jsonc
+// years.YYYY  → set:
+"twicketsEventId": "PASTE_ID",                                  // the number after /event/ in the URL
+"twicketsUrl": "https://www.twickets.live/en/event/PASTE_ID",
+"faceValues":  { "adult_camping": 390 },                       // standard adult camping face value
+"baselines":   { "ticketmasterCurrent": 390, "ownerEarlyBird": 259 }  // standard price → enables the "vs TM" badge
+```
+
+Setting `ticketmasterCurrent` also flips the *Reference Purchases* badge from "standard price TBC" to a
+real comparison. Commit/push (or just edit `public/data/events.json` directly on GitHub).
+
+**③ Recreate the two scheduled tasks** (they were disabled at the previous festival's close):
+the daily health-check and the 4×/day Ticketmaster price check. **Create them fresh** rather than
+re-enabling — that binds them to the current model. Point them at the new year's Ticketmaster event URL.
+
+**④ Renew the cron-job.org PAT** if it's within 90 days of expiry (it's a 90-day classic token — see
+the Token RTF for the expiry, and BACKLOG Seq 2 #8 to move to a 1-year fine-grained token).
+
+**⑤ As the season runs:** when a lineup is announced, set the matching entry in
+`years.YYYY.announcements` to `"confirmed": true` with the real date; record any standard-price tier
+changes; keep `baselines.ticketmasterCurrent` current.
+
+**What happens automatically (no action needed):**
+- The dashboard **defaults to the soonest upcoming year** and tags finished ones "— complete".
+- The scraper **auto-targets the soonest configured, not-yet-past festival**, writes `marketEmpty` on dry
+  days, and **exits cleanly off-season** — so it never fails on a finished or not-yet-listed event.
+- Bundles / non-ticket passes (campervan, car, infant, sub-£168 lots) are **excluded automatically** by
+  the hardened classifier.
+- At festival close the dashboard flips to the **🏁 Festival Complete** state and the season becomes a
+  historical archive. The only manual close-out tasks are: tag `vYYYY-final` in git, disable the two
+  scheduled tasks, and write a one-line season summary into `years.YYYY.notes`.
 
 ---
 
