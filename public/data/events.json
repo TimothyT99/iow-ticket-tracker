@@ -329,7 +329,16 @@
       "notes": "Owner early bird recorded 25 Jun 2026 (£259 all-in, Tier 1 Pre Sale). Still to do: add Twickets resale event ID/URL to start resale tracking, and record the 2027 standard face value once known.",
       "baselines": {
         "ownerEarlyBird": 259.0
-      }
+      },
+      "primaryPriceHistory": [
+        {
+          "date": "2026-06-25",
+          "tier": "Tier 1 Pre-Sale (early bird, camping)",
+          "allIn": 259,
+          "status": "on_sale",
+          "note": "Pre-sale opened 25 Jun 2026. Owner bought 1× weekend camping at £259 all-in. List price before booking fee TBC."
+        }
+      ]
     }
   }
 }
