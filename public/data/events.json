@@ -326,7 +326,7 @@
           "confirmed": false
         }
       ],
-      "notes": "Owner early bird recorded 25 Jun 2026 (£259 all-in, Tier 1 Pre Sale). Still to do: add Twickets resale event ID/URL to start resale tracking, and record the 2027 standard face value once known.",
+      "notes": "2027 pre-sale: early-bird Tier 1 & Tier 2 (camping) both sold out 25–26 Jun 2026 at £259 all-in (both listed at the same price — Tier 1 was expected to be cheaper). No further primary on-sale likely until the initial artist lineup is announced (est. Oct 2026). Interim: watch Twickets resale (event not live yet). Still to do when they appear: add twicketsEventId/twicketsUrl + the 2027 standard face value.",
       "baselines": {
         "ownerEarlyBird": 259.0
       },
