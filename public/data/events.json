@@ -335,8 +335,15 @@
           "date": "2026-06-25",
           "tier": "Tier 1 Pre-Sale (early bird, camping)",
           "allIn": 259,
-          "status": "on_sale",
-          "note": "Pre-sale opened 25 Jun 2026. Owner bought 1× weekend camping at £259 all-in. List price before booking fee TBC."
+          "status": "sold_out",
+          "note": "Pre-sale opened 25 Jun. Owner bought 1× weekend camping at £259 all-in. Listed at the SAME headline price as Tier 2 — Tier 1 was expected to be a little cheaper (possible pricing slip). Sold out before Tier 2. Islander pricing ignored."
+        },
+        {
+          "date": "2026-06-26",
+          "tier": "Tier 2 Pre-Sale (camping)",
+          "allIn": 259,
+          "status": "sold_out",
+          "note": "Sold out ~12:30 Fri 26 Jun after ~24h on sale. Same headline price as Tier 1 (£259 all-in) — unusual; normally Tier 2 > Tier 1. Islander pricing ignored."
         }
       ]
     }
